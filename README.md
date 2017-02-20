@@ -62,7 +62,7 @@ At least one needs to be specified for the daemon to do anything useful
 Arguments are a comma-separated list of configuration parameters:
   
     For rotary encoders (one, volume only):
-        e,pin1,pin2,CMD\[,edge\]
+        e,pin1,pin2,CMD[,edge]
             "e" for "Encoder"
             p1, p2: GPIO PIN numbers in BCM-notation
             CMD: Command. Unused for encoders, always VOLM for Volume
@@ -71,7 +71,7 @@ Arguments are a comma-separated list of configuration parameters:
                   2 - rising edge
                   0, 3 - both
     For buttons: 
-        b,pin,CMD\[,edge\]
+        b,pin,CMD[,edge]
             "b" for "Button"
             pin: GPIO PIN numbers in BCM-notation
             CMD: Command. One of:
