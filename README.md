@@ -35,7 +35,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ## Dependencies
 
-SqueezeButtonPi uses [WiringPi](http://wiringpi.com "WiringPi") and CURL
+SqueezeButtonPi uses [WiringPi](http://wiringpi.com "WiringPi") and libCurl
 
 ## Configuration
 
