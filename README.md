@@ -44,47 +44,47 @@ Usage:
 
 Options arguments:
   
-  -A, --address=Server-Address   Set server address. Default: autodetect
-  -M, --mac=MAC-Address      Set MAC address of player. Deafult: autodetect
-  -p, --password=password    Set password for server. Default: none
-  -P, --port=xxxx            Set server control port. Default: autodetect
-  -u, --username=user name   Set user name for server. Default: none
-  -d, --daemonize            Daemonize
-  -k, --kill                 Kill daemon
-  -s, --silent               Don't produce output
-  -v, --verbose              Produce verbose output
-  -?, --help                 Give this help list
-      --usage                Give a short usage message
-  -V, --version              Print program version
+    -A, --address=Server-Address   Set server address. Default: autodetect
+    -M, --mac=MAC-Address      Set MAC address of player. Deafult: autodetect
+    -p, --password=password    Set password for server. Default: none
+    -P, --port=xxxx            Set server control port. Default: autodetect
+    -u, --username=user name   Set user name for server. Default: none
+    -d, --daemonize            Daemonize
+    -k, --kill                 Kill daemon
+    -s, --silent               Don't produce output
+    -v, --verbose              Produce verbose output
+    -?, --help                 Give this help list
+        --usage                Give a short usage message
+    -V, --version              Print program version
 
 Non-Option arguments.
 At least one needs to be specified for the daemon to do anything useful
 Arguments are a comma-separated list of configuration parameters:
   
-  For rotary encoders (one, volume only):
-      e,pin1,pin2,CMD\[,edge\]
-          "e" for "Encoder"
-          p1, p2: GPIO PIN numbers in BCM-notation
-          CMD: Command. Unused for encoders, always VOLM for Volume
-          edge: Optional. one of
-                1 - falling edge
-                2 - rising edge
-                0, 3 - both
-  For buttons: 
-      b,pin,CMD\[,edge\]
-          "b" for "Button"
-          pin: GPIO PIN numbers in BCM-notation
-          CMD: Command. One of:
-              PLAY:   Play/pause
-              PREV:   Jump to previous track
-              NEXT:   Jump to next track
-              VOL+:   Increase volume
-              VOL-:   Decrease volume
-              POWR:   Toggle power state
-          edge: Optional. one of
-                1 - falling edge
-                2 - rising edge
-                0, 3 - both
+    For rotary encoders (one, volume only):
+        e,pin1,pin2,CMD\[,edge\]
+            "e" for "Encoder"
+            p1, p2: GPIO PIN numbers in BCM-notation
+            CMD: Command. Unused for encoders, always VOLM for Volume
+            edge: Optional. one of
+                  1 - falling edge
+                  2 - rising edge
+                  0, 3 - both
+    For buttons: 
+        b,pin,CMD\[,edge\]
+            "b" for "Button"
+            pin: GPIO PIN numbers in BCM-notation
+            CMD: Command. One of:
+                PLAY:   Play/pause
+                PREV:   Jump to previous track
+                NEXT:   Jump to next track
+                VOL+:   Increase volume
+                VOL-:   Decrease volume
+                POWR:   Toggle power state
+            edge: Optional. one of
+                  1 - falling edge
+                  2 - rising edge
+                  0, 3 - both
 
 
 ## Security
