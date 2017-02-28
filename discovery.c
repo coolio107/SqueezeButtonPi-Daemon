@@ -62,7 +62,7 @@ bool get_serverIPv4(uint32_t *ip);
 void send_discovery(uint32_t address);
 uint32_t read_discovery(uint32_t address);
 
-bool get_mac(uint8_t mac[]);
+static bool get_mac(uint8_t mac[]);
 
 
 #define IP_SEARCH_TIMEOUT 3 // every 3 s
@@ -389,7 +389,7 @@ char * find_mac() {
 //
 // Returns 6 bytes MAC.
 //
-bool get_mac(uint8_t mac[]) {
+static bool get_mac(uint8_t mac[]) {
 #ifdef __unix__ // just to silence errors on Mac while developing
     char *utmac;
     struct ifconf ifc;
