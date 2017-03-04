@@ -375,7 +375,7 @@ char * find_mac() {
     if (!ret)
         return NULL;
     static char macBuf[18];
-    sprintf(macBuf, "%x:%x:%x:%x:%x:%x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    sprintf(macBuf, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     loginfo("MAC address found: %s", macBuf);
     return macBuf;
 }
