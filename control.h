@@ -45,7 +45,9 @@ struct button_ctrl
 {
     struct button * gpio_button;
     volatile bool waiting;
-    char * fragment;
+	char * shortfragment;
+    char * longfragment;
+	bool presstype;
 };
 
 //

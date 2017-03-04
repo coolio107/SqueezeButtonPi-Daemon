@@ -51,6 +51,26 @@ static int numberofbuttons = 0;
 static struct button buttons[max_buttons];
 
 //
+// GetTime function
+//
+uint32_t gettime_ms(void) {
+	struct timespec ts;
+	if (!clock_gettime(CLOCK_REALTIME, &ts)) {
+		return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+	}
+	return 0;
+}
+
+//
+// number of milliseconds to activate a press.
+// shortpress is between NOPRESS and LONGPRESS
+// These need to be configurable.......later on.
+//
+#define NOPRESSTIME 50
+#define LONGPRESSTIME 3000
+#define PRESSED 0
+
+//
 //
 //  Button handler function
 //  Called by the GPIO interrupt when a button is pressed or released
@@ -61,20 +81,45 @@ static struct button buttons[max_buttons];
 //
 void updateButtons()
 {
-    struct button *button = buttons;
-    for (; button < buttons + numberofbuttons; button++)
-    {
-        bool bit = digitalRead(button->pin);
-        
-        int increment = 0;
-        // same? no increment
-        if (button->value != bit)
-            increment = (bit) ? 1 : -1; // Increemnt and current state true: positive increment
-        
-        button->value = bit;
-        
-        if (button->callback)
-            button->callback(button, increment);
+	uint32_t now;
+	now = gettime_ms();
+	struct button *button = buttons;
+	for (; button < buttons + numberofbuttons; button++)
+	{
+		bool bit = digitalRead(button->pin);
+		bool presstype;
+		loginfo("%lu - %lu  Pin Value=%i   Stored Value=%i", (unsigned long)now, (unsigned long)button->timepressed, bit, button->value);
+
+		int increment = 0;
+/*		// same? no increment
+		if (button->value != bit){
+			increment = (bit) ? 1 : -1; // Increemnt and current state true: positive increment
+		} 
+*/
+		if (bit == PRESSED){
+			if (button->timepressed == 0){	
+				button->timepressed = now;
+				increment = 0;
+			} 
+		} else {
+			if ((now - button->timepressed) < NOPRESSTIME ) {
+				loginfo("No PRESS: %i", (now - button->timepressed));
+				increment = 0;
+			} else if ((now - button->timepressed) > LONGPRESSTIME ) {
+				loginfo("Long PRESS: %i", (now - button->timepressed));
+				button->value = bit;
+				presstype = LONGPRESS;
+				increment = 1;
+			} else {
+				loginfo("Short PRESS: %i", (now - button->timepressed));
+				button->value = bit;
+				presstype = SHORTPRESS;
+				increment = 1;
+			}
+			button->timepressed = 0;
+		}
+		if (button->callback && increment)
+			button->callback(button, increment, presstype);
     }
 }
 
@@ -108,6 +153,7 @@ struct button *setupbutton(int pin, button_callback_t callback, int edge)
     newbutton->pin = pin;
     newbutton->value = 0;
     newbutton->callback = callback;
+	newbutton->timepressed = 0;
     
     pinMode(pin, INPUT);
     pullUpDnControl(pin, PUD_UP);
