@@ -93,7 +93,10 @@ void updateButtons()
 //           The pointer will be NULL is the function failed for any reason
 //
 //
-struct button *setupbutton(int pin, button_callback_t callback, int edge)
+struct button *setupbutton(int pin,
+                           button_callback_t callback,
+                           int edge,
+                           int pullup)
 {
     if (numberofbuttons > max_buttons)
     {
@@ -101,8 +104,12 @@ struct button *setupbutton(int pin, button_callback_t callback, int edge)
         return NULL;
     }
     
+    // Default: use both edges
     if (edge != INT_EDGE_FALLING && edge != INT_EDGE_RISING)
         edge = INT_EDGE_BOTH;
+    // Default: puul up from GND
+    if ((pullup != PUD_UP) && (pullup != PUD_DOWN))
+        pullup = PUD_UP;
     
     struct button *newbutton = buttons + numberofbuttons++;
     newbutton->pin = pin;
@@ -110,7 +117,7 @@ struct button *setupbutton(int pin, button_callback_t callback, int edge)
     newbutton->callback = callback;
     
     pinMode(pin, INPUT);
-    pullUpDnControl(pin, PUD_UP);
+    pullUpDnControl(pin, pullup);
     wiringPiISR(pin,edge, updateButtons);
     
     return newbutton;
@@ -181,7 +188,8 @@ void updateEncoders()
 struct encoder *setupencoder(int pin_a,
                              int pin_b,
                              rotaryencoder_callback_t callback,
-                             int edge)
+                             int edge,
+                             int pullup)
 {
     if (numberofencoders > max_encoders)
     {
@@ -189,8 +197,12 @@ struct encoder *setupencoder(int pin_a,
         return NULL;
     }
     
+    // Default: use both edges
     if (edge != INT_EDGE_FALLING && edge != INT_EDGE_RISING)
         edge = INT_EDGE_BOTH;
+    // Default: pull up from GND
+    if ((pullup != PUD_UP) && (pullup != PUD_DOWN))
+        pullup = PUD_UP;
     
     struct encoder *newencoder = encoders + numberofencoders++;
     newencoder->pin_a = pin_a;
@@ -201,8 +213,8 @@ struct encoder *setupencoder(int pin_a,
     
     pinMode(pin_a, INPUT);
     pinMode(pin_b, INPUT);
-    pullUpDnControl(pin_a, PUD_UP);
-    pullUpDnControl(pin_b, PUD_UP);
+    pullUpDnControl(pin_a, pullup);
+    pullUpDnControl(pin_b, pullup);
     wiringPiISR(pin_a,edge, updateEncoders);
     wiringPiISR(pin_b,edge, updateEncoders);
     

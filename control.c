@@ -96,8 +96,11 @@ void button_press_cb(const struct button * button, int change) {
 //                  1 - falling edge
 //                  2 - rising edge
 //                  0, 3 - both
+//      pullup/down: one of
+//                  1 - pulling down
+//                  2 - pulling up
 //
-int setup_button_ctrl(char * cmd, int pin, int edge) {
+int setup_button_ctrl(char * cmd, int pin, int edge, int pullup) {
     char * fragment = NULL;
     if (strlen(cmd) > 4)
         return -1;
@@ -123,15 +126,16 @@ int setup_button_ctrl(char * cmd, int pin, int edge) {
     if (!fragment)
         return -1;
     
-    struct button * gpio_b = setupbutton(pin, button_press_cb, edge);
+    struct button * gpio_b = setupbutton(pin, button_press_cb, edge, pullup);
     button_ctrls[numberofbuttons].fragment = fragment;
     button_ctrls[numberofbuttons].waiting = false;
     button_ctrls[numberofbuttons].gpio_button = gpio_b;
     numberofbuttons++;
-    loginfo("Button defined: Pin %d, Edge: %s, Fragment: \n%s",
+    loginfo("Button defined: Pin %d, Edge: %s, Pulling %s, Fragment: \n%s",
             pin,
             ((edge != INT_EDGE_FALLING) && (edge != INT_EDGE_RISING)) ? "both" :
             (edge == INT_EDGE_FALLING) ? "falling" : "rising",
+            (pullup == PUD_UP) ? "down" : "up",
             fragment);
     return 0;
 }
@@ -173,9 +177,12 @@ void encoder_rotate_cb(const struct encoder * encoder, long change) {
 //                  1 - falling edge
 //                  2 - rising edge
 //                  0, 3 - both
+//      pullup/down: one of
+//                  1 - pulling down
+//                  2 - pulling up
 //
 //
-int setup_encoder_ctrl(char * cmd, int pin1, int pin2, int edge) {
+int setup_encoder_ctrl(char * cmd, int pin1, int pin2, int edge, int pullup) {
     char * fragment = FRAGMENT_VOLUME;
     /*if (strlen(cmd) > 4)
         return -1;
@@ -189,15 +196,16 @@ int setup_encoder_ctrl(char * cmd, int pin1, int pin2, int edge) {
         fragment = FRAGMENT_VOLUME;
     }*/
     
-    struct encoder * gpio_e = setupencoder(pin1, pin2, encoder_rotate_cb, edge);
+    struct encoder * gpio_e = setupencoder(pin1, pin2, encoder_rotate_cb, edge, pullup);
     encoder_ctrls[numberofencoders].fragment = fragment;
     encoder_ctrls[numberofencoders].gpio_encoder = gpio_e;
     encoder_ctrls[numberofencoders].last_value = 0;
     numberofencoders++;
-    loginfo("Rotary encoder defined: Pin %d, %d, Edge: %s, Fragment: \n%s",
+    loginfo("Rotary encoder defined: Pin %d, %d, Edge: %s, Pulling %s, Fragment: \n%s",
             pin1, pin2,
             ((edge != INT_EDGE_FALLING) && (edge != INT_EDGE_RISING)) ? "both" :
             (edge == INT_EDGE_FALLING) ? "falling" : "rising",
+            (pullup == PUD_UP) ? "down" : "up",
             fragment);
     return 0;
 }

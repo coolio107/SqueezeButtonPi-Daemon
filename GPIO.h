@@ -90,7 +90,8 @@ struct button {
 //
 struct button *setupbutton(int pin,
                            button_callback_t callback,
-                           int edge);
+                           int edge,
+                           int pullup);
 
 
 struct encoder;
@@ -129,7 +130,8 @@ struct encoder
 struct encoder *setupencoder(int pin_a,
                              int pin_b,
                              rotaryencoder_callback_t callback,
-                             int edge);
+                             int edge,
+                             int pullup);
 
 
 

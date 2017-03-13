@@ -66,10 +66,14 @@ Arguments are a comma-separated list of configuration parameters:
             "e" for "Encoder"
             p1, p2: GPIO PIN numbers in BCM-notation
             CMD: Command. Unused for encoders, always VOLM for Volume
-            edge: Optional. one of
-                  1 - falling edge
-                  2 - rising edge
-                  0, 3 - both
+            edge: Optional (Default: "both"). one of
+                    1 - falling edge
+                    2 - rising edge
+                    0, 3 - both
+            pullup: Optional parameter (deafult: pull up) declaring how the GPIO is used.
+                    One of
+                    1 - pull down from 3.3V
+                    2 - pull up from GND
     For buttons: 
         b,pin,CMD[,edge]
             "b" for "Button"
@@ -81,10 +85,14 @@ Arguments are a comma-separated list of configuration parameters:
                 VOL+:   Increase volume
                 VOL-:   Decrease volume
                 POWR:   Toggle power state
-            edge: Optional. one of
-                  1 - falling edge
-                  2 - rising edge
-                  0, 3 - both
+            edge: Optional (Default: "both"). one of
+                    1 - falling edge
+                    2 - rising edge
+                    0, 3 - both
+            pullup: Optional parameter (deafult: pull up) declaring how the GPIO is used.
+                    One of
+                    1 - pull down from 3.3V
+                    2 - pull up from GND
 
 
 ## Security

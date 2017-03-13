@@ -62,8 +62,11 @@ struct button_ctrl
 //                  1 - falling edge
 //                  2 - rising edge
 //                  0, 3 - both
+//      pullup/down: one of
+//                  1 - pulling down
+//                  2 - pulling up
 //
-int setup_button_ctrl(char * cmd, int pin, int edge);
+int setup_button_ctrl(char * cmd, int pin, int edge, int pullup);
 
 //
 //  Polling function: handle button commands
@@ -93,8 +96,11 @@ struct encoder_ctrl
 //                  1 - falling edge
 //                  2 - rising edge
 //                  0, 3 - both
+//      pullup/down: one of
+//                  1 - pulling down
+//                  2 - pulling up
 //
-int setup_encoder_ctrl(char * cmd, int pin1, int pin2, int edge);
+int setup_encoder_ctrl(char * cmd, int pin1, int pin2, int edge, int pullup);
 
 //
 //  Polling function: handle encoders

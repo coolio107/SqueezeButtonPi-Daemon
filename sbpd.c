@@ -104,16 +104,20 @@ static struct argp_option options[] =
 //  At least one needs to be specified for the daemon to do anything useful
 //  Arguments are a comma-separated list of configuration parameters:
 //  For rotary encoders (one, volume only):
-//      e,pin1,pin2,CMD[,edge]
+//      e,pin1,pin2,CMD[,edge[,pullup]]
 //          "e" for "Encoder"
 //          p1, p2: GPIO PIN numbers in BCM-notation
 //          CMD: Command. Unused for encoders, always VOLM for Volume
-//          edge: Optional. one of
+//          edge: Optional (Default: "both"). one of
 //                  1 - falling edge
 //                  2 - rising edge
 //                  0, 3 - both
+//          pullup: Optional parameter (deafult: pull up) declaring how the GPIO is used.
+//                  One of
+//                  1 - pull down from 3.3V
+//                  2 - pull up from GND
 //  For buttons:
-//      b,pin,CMD[,edge]
+//      b,pin,CMD[,edge[,pullup]]
 //          "b" for "Button"
 //          pin: GPIO PIN numbers in BCM-notation
 //          CMD: Command. One of:
@@ -123,12 +127,16 @@ static struct argp_option options[] =
 //              VOL+:   Increase volume
 //              VOL-:   Decrease volume
 //              POWR:   Toggle power state
-//          edge: Optional. one of
+//          edge: Optional (Default: "both"). one of
 //                  1 - falling edge
 //                  2 - rising edge
 //                  0, 3 - both
+//          pullup: Optional parameter (deafult: pull up) declaring how the GPIO is used.
+//                  One of
+//                  1 - pull down from 3.3V
+//                  2 - pull up from GND
 //
-static char args_doc[] = "[e,pin1,pin2,CMD,edge] [b,pin,CMD,edge...]";
+static char args_doc[] = "[e,pin1,pin2,CMD,edge,pullup] [b,pin,CMD,edge,pullup...]";
 //
 //  DOC.  Field 4 in ARGP.
 //  Program documentation.
@@ -337,10 +345,14 @@ parse_opt (int key, char *arg, struct argp_state *state)
 //          "e" for "Encoder"
 //          p1, p2: GPIO PIN numbers in BCM-notation
 //          CMD: Command. Unused for encoders, always VOLM for Volume
-//          edge: Optional. one of
+//          edge: Optional (Default: "both"). one of
 //                  1 - falling edge
 //                  2 - rising edge
 //                  0, 3 - both
+//          pullup: Optional parameter (deafult: pull up) declaring how the GPIO is used.
+//                  One of
+//                  1 - pull down from 3.3V
+//                  2 - pull up from GND
 //  For buttons:
 //      b,pin,CMD[,edge]
 //          "b" for "Button"
@@ -352,10 +364,14 @@ parse_opt (int key, char *arg, struct argp_state *state)
 //              VOL+:   Increase volume
 //              VOL-:   Decrease volume
 //              POWR:   Toggle power state
-//          edge: Optional. one of
+//          edge: Optional (Default: "both"). one of
 //                  1 - falling edge
 //                  2 - rising edge
 //                  0, 3 - both
+//          pullup: Optional parameter (deafult: pull up) declaring how the GPIO is used.
+//                  One of
+//                  1 - pull down from 3.3V
+//                  2 - pull up from GND
 //
 //
 static error_t parse_arg() {
@@ -380,7 +396,11 @@ static error_t parse_arg() {
                     int edge = 0;
                     if (string)
                         edge = (int)strtol(string, NULL, 10);
-                    setup_encoder_ctrl(cmd, p1, p2, edge);
+                    string = strtok(NULL, ",");
+                    int pullup = 2;
+                    if (string)
+                        pullup = (int)strtol(string, NULL, 10);
+                    setup_encoder_ctrl(cmd, p1, p2, edge, pullup);
                 }
                     break;
                 case 'b': {
@@ -393,7 +413,11 @@ static error_t parse_arg() {
                     int edge = 0;
                     if (string)
                         edge = (int)strtol(string, NULL, 10);
-                    setup_button_ctrl(cmd, pin, edge);
+                    string = strtok(NULL, ",");
+                    int pullup = 2;
+                    if (string)
+                        pullup = (int)strtol(string, NULL, 10);
+                    setup_button_ctrl(cmd, pin, edge, pullup);
                 }
                     break;
                     
