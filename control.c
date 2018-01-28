@@ -73,10 +73,11 @@ static int numberofencoders = 0;
 //  Button press callback
 //  Sets the flag for "button pressed"
 //
-void button_press_cb(const struct button * button, int change) {
+void button_press_cb(const struct button * button, int change, bool presstype) {
     for (int cnt = 0; cnt < numberofbuttons; cnt++) {
         if (button == button_ctrls[cnt].gpio_button) {
-            button_ctrls[cnt].waiting = true;
+            button_ctrls[cnt].presstype = presstype;
+			button_ctrls[cnt].waiting = true;
             return;
         }
     }
@@ -124,7 +125,7 @@ int setup_button_ctrl(char * cmd, int pin, int edge) {
         return -1;
     
     struct button * gpio_b = setupbutton(pin, button_press_cb, edge);
-    button_ctrls[numberofbuttons].fragment = fragment;
+    button_ctrls[numberofbuttons].shortfragment = fragment;
     button_ctrls[numberofbuttons].waiting = false;
     button_ctrls[numberofbuttons].gpio_button = gpio_b;
     numberofbuttons++;
@@ -145,8 +146,8 @@ void handle_buttons(struct sbpd_server * server) {
     //logdebug("Polling buttons");
     for (int cnt = 0; cnt < numberofbuttons; cnt++) {
         if (button_ctrls[cnt].waiting) {
-            loginfo("Button pressed: Pin %d", button_ctrls[cnt].gpio_button->pin);
-            send_command(server, button_ctrls[cnt].fragment);
+            loginfo("Button pressed: Pin: %d, Press Type:%d", button_ctrls[cnt].gpio_button->pin, button_ctrls[cnt].presstype);
+            send_command(server, button_ctrls[cnt].shortfragment);
             button_ctrls[cnt].waiting = false;  // clear waiting
         }
     }

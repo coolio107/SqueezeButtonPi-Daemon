@@ -259,7 +259,7 @@ parse_opt (int key, char *arg, struct argp_state *state)
             //  Verbose mode
         case 'v':
             loginfo("Options parsing: Set verbose mode");
-            streamloglevel = LOG_DEBUG;
+            streamloglevel = LOG_INFO;
             break;
             //  Silent Mode
         case 's':

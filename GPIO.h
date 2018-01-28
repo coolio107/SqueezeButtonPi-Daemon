@@ -36,6 +36,7 @@
 #define GPIO_h
 
 #include "sbpd.h"
+#include "time.h"
 
 
 //
@@ -59,17 +60,21 @@ void init_GPIO();
 
 struct button;
 
+#define SHORTPRESS 0
+#define LONGPRESS 1
+
 //
 //  A callback executed when a button gets triggered. Button struct and change returned.
 //  Note: change might be "0" indicating no change, this happens when buttons chatter
 //  Value in struct already updated.
 //
-typedef void (*button_callback_t)(const struct button * button, int change);
+typedef void (*button_callback_t)(const struct button * button, int change, bool presstype);
 
 struct button {
     int pin;
     volatile bool value;
     button_callback_t callback;
+	uint32_t timepressed;
 };
 
 
