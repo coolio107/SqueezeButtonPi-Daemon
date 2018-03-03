@@ -64,6 +64,6 @@ void shutdown_comm();
 //  Returns: success flag
 //
 //
-bool send_command(struct sbpd_server * server, char * fragment);
+bool send_command(struct sbpd_server * server, int command, char * fragment);
 
 #endif /* servercomm_h */

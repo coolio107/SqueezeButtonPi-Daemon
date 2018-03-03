@@ -37,6 +37,9 @@
 #include "servercomm.h"
 #include "sbpd.h"
 #include <curl/curl.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 //
 // lock for asynchronous sending of commands - we don't do this right now
@@ -67,62 +70,76 @@ static struct curl_slist * headerList = NULL;
 //  Returns: success flag
 //
 //
-bool send_command(struct sbpd_server * server, char * fragment) {
-    if (!curl)
-        return false;
-    
-    //
-    //  Sending commands asynchronously? Secure with a mutex
-    //  But right now we are actually not doing that, so comment out
-    //
-    /*pthread_mutex_lock(&lock);
-    if (commLock) {
-        pthread_mutex_unlock(&lock);
-        return false;
+bool send_command(struct sbpd_server * server, int command, char * fragment) {
+     loginfo("Send Command:%d, Fragment:%s\n", command, fragment);
+	 if ( command == LMS ) {
+        if (!curl)
+            return false;
+
+        //
+        //  Sending commands asynchronously? Secure with a mutex
+        //  But right now we are actually not doing that, so comment out
+        //
+        /*pthread_mutex_lock(&lock);
+        if (commLock) {
+            pthread_mutex_unlock(&lock);
+            return false;
+        }
+        commLock = true;
+        pthread_mutex_unlock(&lock);*/
+
+        //
+        //  target setup. We call an IPv4 ip so we need to replace a default host
+        //
+        struct curl_slist * targetList = NULL;
+        curl_easy_setopt(curl, CURLOPT_URL, SERVER_ADDRESS_TEMPLATE);
+        char target[100];
+        snprintf(target, sizeof(target), "::%s:%d", server->host, server->port);
+        //logdebug("Command Target: %s", target);
+        targetList = curl_slist_append(targetList, target);
+        curl_easy_setopt(curl, CURLOPT_CONNECT_TO, targetList);
+
+        //
+        //  username/password?
+        //
+        char secret[255];
+        if (server->user && server->password) {
+            snprintf(secret, sizeof(secret), "%s:%s", server->user, server->password);
+            curl_easy_setopt(curl, CURLOPT_USERPWD, secret);
+        }
+
+        //
+        //  setup payload (JSON/RPC CLI command) for POST command
+        //
+        char jsonFragment[256];
+        snprintf(jsonFragment, sizeof(jsonFragment), JSON_CALL_MASK, 1l, MAC, fragment);
+        logdebug("Server %s command: %s", target, jsonFragment);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonFragment);
+        if (headerList)
+            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerList);
+
+        //
+        //  Send command and clean up
+        //  Note: one could retrieve a result here since all communication is synchronous!
+        //
+        CURLcode res = curl_easy_perform(curl);
+        logdebug("Curl result: %d", res);
+        curl_slist_free_all(targetList);
+        targetList = NULL;
+
+        //commLock = false;
+        return true;
+    } else if ( command == SCRIPT ) {
+        char * cmdline = (char *) malloc(strlen(fragment));
+        int err;
+		strcpy( cmdline, fragment);
+		loginfo("Sending commandline: %s\n", cmdline);
+        if ((err = system(cmdline)) != 0){
+            loginfo ("%s exit status = %d\n", cmdline, err);
+				return false;
+        }
+        free (cmdline);
     }
-    commLock = true;
-    pthread_mutex_unlock(&lock);*/
-    
-    //
-    //  target setup. We call an IPv4 ip so we need to replace a default host
-    //
-    struct curl_slist * targetList = NULL;
-    curl_easy_setopt(curl, CURLOPT_URL, SERVER_ADDRESS_TEMPLATE);
-    char target[100];
-    snprintf(target, sizeof(target), "::%s:%d", server->host, server->port);
-    //logdebug("Command Target: %s", target);
-    targetList = curl_slist_append(targetList, target);
-    curl_easy_setopt(curl, CURLOPT_CONNECT_TO, targetList);
-    
-    //
-    //  username/password?
-    //
-    char secret[255];
-    if (server->user && server->password) {
-        snprintf(secret, sizeof(secret), "%s:%s", server->user, server->password);
-        curl_easy_setopt(curl, CURLOPT_USERPWD, secret);
-    }
-    
-    //
-    //  setup payload (JSON/RPC CLI command) for POST command
-    //
-    char jsonFragment[256];
-    snprintf(jsonFragment, sizeof(jsonFragment), JSON_CALL_MASK, 1l, MAC, fragment);
-    logdebug("Server %s command: %s", target, jsonFragment);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonFragment);
-    if (headerList)
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerList);
-    
-    //
-    //  Send command and clean up
-    //  Note: one could retrieve a result here since all communication is synchronous!
-    //
-    CURLcode res = curl_easy_perform(curl);
-    logdebug("Curl result: %d", res);
-    curl_slist_free_all(targetList);
-    targetList = NULL;
-    
-    //commLock = false;
     return true;
 }
 

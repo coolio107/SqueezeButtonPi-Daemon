@@ -77,7 +77,8 @@ void button_press_cb(const struct button * button, int change, bool presstype) {
     for (int cnt = 0; cnt < numberofbuttons; cnt++) {
         if (button == button_ctrls[cnt].gpio_button) {
             button_ctrls[cnt].presstype = presstype;
-			button_ctrls[cnt].waiting = true;
+            button_ctrls[cnt].waiting = true;
+			loginfo("Button CB set for button %d\n", cnt);
             return;
         }
     }
@@ -92,6 +93,8 @@ void button_press_cb(const struct button * button, int change, bool presstype) {
 //                  VOL-    - decrement volume
 //                  PREV    - previous track
 //                  NEXT    - next track
+//          Command type SCRIPT.
+//                  SCRIPT:/path/to/shell/script.sh
 //      pin: the GPIO-Pin-Number
 //      edge: one of
 //                  1 - falling edge
@@ -100,39 +103,58 @@ void button_press_cb(const struct button * button, int change, bool presstype) {
 //
 int setup_button_ctrl(char * cmd, int pin, int edge) {
     char * fragment = NULL;
-    if (strlen(cmd) > 4)
-        return -1;
-    
+    char * script;
+    char * separator = ":";
+    int cmdtype;
+
+//   Scripts will have longer commands
+//    if (strlen(cmd) > 4)
+//        return -1;
+
     //
     //  Select fragment for parameter
     //  Would love to "switch" here but that's not portable...
     //
     uint32_t code = STRTOU32(cmd);
     if (code == STRTOU32("PLAY")) {
+        cmdtype = LMS;
         fragment = FRAGMENT_PAUSE;
     } else if (code == STRTOU32("VOL+")) {
+        cmdtype = LMS;
         fragment = FRAGMENT_VOLUME_UP;
     } else if (code == STRTOU32("VOL-")) {
+        cmdtype = LMS;
         fragment = FRAGMENT_VOLUME_DOWN;
     } else if (code == STRTOU32("PREV")) {
+        cmdtype = LMS;
         fragment = FRAGMENT_PREV;
     } else if (code == STRTOU32("NEXT")) {
+        cmdtype = LMS;
         fragment = FRAGMENT_NEXT;
     } else if (code == STRTOU32("POWR")) {
+        cmdtype = LMS;
         fragment = FRAGMENT_POWER;
+    }	else if (strncmp("SCRIPT:", cmd, 7) == 0) {
+        cmdtype = SCRIPT;
+        strtok( cmd, separator );
+        script = strtok( NULL, "" );
+        fragment = script;
     }
     if (!fragment)
         return -1;
-    
+
     struct button * gpio_b = setupbutton(pin, button_press_cb, edge);
+    button_ctrls[numberofbuttons].cmdtype = cmdtype;
     button_ctrls[numberofbuttons].shortfragment = fragment;
     button_ctrls[numberofbuttons].waiting = false;
     button_ctrls[numberofbuttons].gpio_button = gpio_b;
     numberofbuttons++;
-    loginfo("Button defined: Pin %d, Edge: %s, Fragment: \n%s",
+    loginfo("Button defined: Pin %d, Edge: %s, Type: %i, Fragment: \n%s",
+
             pin,
             ((edge != INT_EDGE_FALLING) && (edge != INT_EDGE_RISING)) ? "both" :
             (edge == INT_EDGE_FALLING) ? "falling" : "rising",
+            cmdtype,
             fragment);
     return 0;
 }
@@ -147,7 +169,7 @@ void handle_buttons(struct sbpd_server * server) {
     for (int cnt = 0; cnt < numberofbuttons; cnt++) {
         if (button_ctrls[cnt].waiting) {
             loginfo("Button pressed: Pin: %d, Press Type:%d", button_ctrls[cnt].gpio_button->pin, button_ctrls[cnt].presstype);
-            send_command(server, button_ctrls[cnt].shortfragment);
+            send_command(server, button_ctrls[cnt].cmdtype, button_ctrls[cnt].shortfragment);
             button_ctrls[cnt].waiting = false;  // clear waiting
         }
     }
@@ -223,6 +245,9 @@ void handle_encoders(struct sbpd_server * server) {
     }*/
     
     //logdebug("Polling encoders");
+
+    int command = LMS;
+
     for (int cnt = 0; cnt < numberofencoders; cnt++) {
         //
         //  build volume delta
@@ -241,8 +266,8 @@ void handle_encoders(struct sbpd_server * server) {
             char * prefix = (delta > 0) ? "+" : "-";
             snprintf(fragment, sizeof(fragment),
                      encoder_ctrls[cnt].fragment, prefix, abs(delta));
-            
-            if (send_command(server, fragment)) {
+
+            if (send_command(server, command, fragment)) {
                 encoder_ctrls[cnt].last_value = encoder_ctrls[cnt].gpio_encoder->value;
                 //lasttimeVol = time; // chatter filter
             }

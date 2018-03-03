@@ -59,6 +59,11 @@ typedef enum {
     SBPD_cfg_MAC = 0x1000,
 } sbpd_config_parameters_t;
 
+//
+//  Command types
+//
+#define LMS      0
+#define SCRIPT   1
 
 // supported commands
 // need to be configured
