@@ -87,6 +87,7 @@ void button_press_cb(const struct button * button, int change, bool presstype) {
 //
 //  Setup button control
 //  Parameters:
+//      pin: the GPIO-Pin-Number
 //      cmd: Command. One of
 //                  PLAY    - play/pause
 //                  VOL+    - increment volume
@@ -95,13 +96,12 @@ void button_press_cb(const struct button * button, int change, bool presstype) {
 //                  NEXT    - next track
 //          Command type SCRIPT.
 //                  SCRIPT:/path/to/shell/script.sh
-//      pin: the GPIO-Pin-Number
-//      edge: one of
-//                  1 - falling edge
-//                  2 - rising edge
-//                  0, 3 - both
+//      resist: Optional. one of
+//          0 - Internal resistor off
+//          1 - pull down         - input puts 3v on GPIO pin
+//          2 - pull up (default) - input pulls GPIO pin to ground
 //
-int setup_button_ctrl(char * cmd, int pin, int edge) {
+int setup_button_ctrl(char * cmd, int pin, int resist, int pressed) {
     char * fragment = NULL;
     char * script;
     char * separator = ":";
@@ -143,17 +143,22 @@ int setup_button_ctrl(char * cmd, int pin, int edge) {
     if (!fragment)
         return -1;
 
-    struct button * gpio_b = setupbutton(pin, button_press_cb, edge);
+    // Make sure resistor setting makes sense, or reset to default
+	 if ( (resist != PUD_OFF) && (resist != PUD_DOWN) && (resist == PUD_UP) )
+        resist = PUD_UP;
+
+    struct button * gpio_b = setupbutton(pin, button_press_cb, resist, (bool)(pressed == 0) ? 0 : 1);
+
     button_ctrls[numberofbuttons].cmdtype = cmdtype;
     button_ctrls[numberofbuttons].shortfragment = fragment;
     button_ctrls[numberofbuttons].waiting = false;
     button_ctrls[numberofbuttons].gpio_button = gpio_b;
     numberofbuttons++;
-    loginfo("Button defined: Pin %d, Edge: %s, Type: %i, Fragment: \n%s",
+    loginfo("Button defined: Pin %d, BCM Resistor: %s, Type: %i, Fragment: \n%s",
 
             pin,
-            ((edge != INT_EDGE_FALLING) && (edge != INT_EDGE_RISING)) ? "both" :
-            (edge == INT_EDGE_FALLING) ? "falling" : "rising",
+				(resist == PUD_OFF) ? "both" :
+            (resist == PUD_DOWN) ? "down" : "up",
             cmdtype,
             fragment);
     return 0;

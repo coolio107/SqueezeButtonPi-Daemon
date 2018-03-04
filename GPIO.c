@@ -68,7 +68,8 @@ uint32_t gettime_ms(void) {
 //
 #define NOPRESSTIME 50
 #define LONGPRESSTIME 3000
-#define PRESSED 0
+//#define PRESSED 0
+//#define PRESSED 1
 
 //
 //
@@ -96,7 +97,7 @@ void updateButtons()
 			increment = (bit) ? 1 : -1; // Increemnt and current state true: positive increment
 		} 
 */
-		if (bit == PRESSED){
+		if (bit == button->pressed){
 			if (button->timepressed == 0){	
 				button->timepressed = now;
 				increment = 0;
@@ -138,7 +139,7 @@ void updateButtons()
 //           The pointer will be NULL is the function failed for any reason
 //
 //
-struct button *setupbutton(int pin, button_callback_t callback, int edge)
+struct button *setupbutton(int pin, button_callback_t callback, int resist, bool pressed)
 {
     if (numberofbuttons > max_buttons)
     {
@@ -146,17 +147,16 @@ struct button *setupbutton(int pin, button_callback_t callback, int edge)
         return NULL;
     }
     
-    if (edge != INT_EDGE_FALLING && edge != INT_EDGE_RISING)
-        edge = INT_EDGE_BOTH;
+    int edge = INT_EDGE_BOTH;  //Need to see both directions for button depressed time.
     
     struct button *newbutton = buttons + numberofbuttons++;
     newbutton->pin = pin;
     newbutton->value = 0;
     newbutton->callback = callback;
-	newbutton->timepressed = 0;
-    
+    newbutton->timepressed = 0;
+    newbutton->pressed = pressed;
     pinMode(pin, INPUT);
-    pullUpDnControl(pin, PUD_UP);
+    pullUpDnControl(pin, resist);
     wiringPiISR(pin,edge, updateButtons);
     
     return newbutton;

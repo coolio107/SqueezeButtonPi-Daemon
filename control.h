@@ -68,7 +68,7 @@ struct button_ctrl
 //                  2 - rising edge
 //                  0, 3 - both
 //
-int setup_button_ctrl(char * cmd, int pin, int edge);
+int setup_button_ctrl(char * cmd, int pin, int resist, int pressed);
 
 //
 //  Polling function: handle button commands

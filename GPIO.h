@@ -74,9 +74,9 @@ struct button {
     int pin;
     volatile bool value;
     button_callback_t callback;
-	uint32_t timepressed;
+    uint32_t timepressed;
+    bool pressed;
 };
-
 
 //
 //
@@ -95,7 +95,8 @@ struct button {
 //
 struct button *setupbutton(int pin,
                            button_callback_t callback,
-                           int edge);
+                           int resist,
+                           bool pressed);
 
 
 struct encoder;
