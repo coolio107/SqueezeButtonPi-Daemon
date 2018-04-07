@@ -59,7 +59,7 @@ static int numberofencoders = 0;
 //  Buttons
 //
 #define FRAGMENT_PAUSE          "[\"pause\"]"
-#define FRAGMENT_VOLUME_UP      "[\"button\",\"volume_up\"]"
+#define FRAGMENT_VOLUME_UP      "[\"button\",\"volup\"]"
 #define FRAGMENT_VOLUME_DOWN    "[\"button\",\"voldown\"]"
 #define FRAGMENT_PREV           "[\"button\",\"rew\"]"
 #define FRAGMENT_NEXT           "[\"button\",\"fwd\"]"
