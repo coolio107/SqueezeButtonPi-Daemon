@@ -123,7 +123,7 @@ For buttons:\n\
     b,pin,CMD[,resist,pressed]\n\
         \"b\" for \"Button\"\n\
          pin:  GPIO PIN numbers in BCM-notation\n\
-         cmd: Command. One of\n\
+         CMD: Command. One of\n\
                     PLAY    - play/pause\n\
                     VOL+    - increment volume\n\
                     VOL-    - decrement volume\n\
@@ -137,7 +137,8 @@ For buttons:\n\
               2 - pull up (default) - input pulls GPIO pin to ground\n\
          pressed: Optional GPIO pinstate for button to read pressed\n\
               0 - state is 0 (default)\n\
-              1 - state is 1\n\n";
+              1 - state is 1\n\
+         CMD_LONG: Command to be used for a long button push, see above command list\n\n";
 
 //
 //  ARGP parsing structure
@@ -347,10 +348,10 @@ parse_opt (int key, char *arg, struct argp_state *state)
 //                  2 - rising edge
 //                  0, 3 - both
 //  For buttons:
-//      b,pin,CMD[,edge]
+//      b,pin,CMD[,resist,pressed,CMD_LONG]
 //          "b" for "Button"
 //           pin:  GPIO PIN numbers in BCM-notation
-//           cmd: Command. One of
+//           CMD: Command. One of
 //                      PLAY    - play/pause
 //                      VOL+    - increment volume
 //                      VOL-    - decrement volume
@@ -365,6 +366,7 @@ parse_opt (int key, char *arg, struct argp_state *state)
 //           pressed: Optional GPIO pinstate for button to read pressed
 //                0 - state is 0 (default)
 //                1 - state is 1
+//           CMD_LONG Command to be used for a long button push, see above command list
 //
 static error_t parse_arg() {
     for (int arg_num = 0; arg_num < arg_element_count; arg_num++) {
@@ -405,7 +407,11 @@ static error_t parse_arg() {
                     string = strtok(NULL, ",");
                     if (string)
                         pressed = (int)strtol(string, NULL, 10);
-                    setup_button_ctrl(cmd, pin, resist, pressed);
+                    char * cmd_long = NULL;
+                    if (string)
+                        cmd_long = strtok(NULL, ",");
+
+                    setup_button_ctrl(cmd, pin, resist, pressed, cmd_long);
                 }
                     break;
                     

@@ -45,10 +45,11 @@ struct button_ctrl
 {
     struct button * gpio_button;
     volatile bool waiting;
-	 char * shortfragment;
+    char * shortfragment;
     char * longfragment;
-	 bool presstype;
+    bool presstype;
     int cmdtype;
+    int cmd_longtype;
 };
 
 //
@@ -68,7 +69,7 @@ struct button_ctrl
 //                  2 - rising edge
 //                  0, 3 - both
 //
-int setup_button_ctrl(char * cmd, int pin, int resist, int pressed);
+int setup_button_ctrl(char * cmd, int pin, int resist, int pressed, char * cmd_long);
 
 //
 //  Polling function: handle button commands
