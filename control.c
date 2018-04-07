@@ -59,7 +59,7 @@ static int numberofencoders = 0;
 //  Buttons
 //
 #define FRAGMENT_PAUSE          "[\"pause\"]"
-#define FRAGMENT_VOLUME_UP      "[\"button\",\"volume_up\"]"
+#define FRAGMENT_VOLUME_UP      "[\"button\",\"volup\"]"
 #define FRAGMENT_VOLUME_DOWN    "[\"button\",\"voldown\"]"
 #define FRAGMENT_PREV           "[\"button\",\"rew\"]"
 #define FRAGMENT_NEXT           "[\"button\",\"fwd\"]"
@@ -77,7 +77,8 @@ void button_press_cb(const struct button * button, int change, bool presstype) {
     for (int cnt = 0; cnt < numberofbuttons; cnt++) {
         if (button == button_ctrls[cnt].gpio_button) {
             button_ctrls[cnt].presstype = presstype;
-			button_ctrls[cnt].waiting = true;
+            button_ctrls[cnt].waiting = true;
+            loginfo("Button CB set for button %d\n", cnt);
             return;
         }
     }
@@ -86,54 +87,132 @@ void button_press_cb(const struct button * button, int change, bool presstype) {
 //
 //  Setup button control
 //  Parameters:
+//      pin: the GPIO-Pin-Number
 //      cmd: Command. One of
 //                  PLAY    - play/pause
 //                  VOL+    - increment volume
 //                  VOL-    - decrement volume
 //                  PREV    - previous track
 //                  NEXT    - next track
-//      pin: the GPIO-Pin-Number
-//      edge: one of
-//                  1 - falling edge
-//                  2 - rising edge
-//                  0, 3 - both
-//
-int setup_button_ctrl(char * cmd, int pin, int edge) {
+//          Command type SCRIPT.
+//                  SCRIPT:/path/to/shell/script.sh
+//      resist: Optional. one of
+//          0 - Internal resistor off
+//          1 - pull down         - input puts 3v on GPIO pin
+//          2 - pull up (default) - input pulls GPIO pin to ground
+//      pressed: Optional GPIO pinstate for button to read pressed
+//          0 - state is 0 (default)
+//          1 - state is 1
+//      cmd_long Command to be used for a long button push, see above command list
+//      long_time: Number of milliseconds to define a long press
+
+int setup_button_ctrl(char * cmd, int pin, int resist, int pressed, char * cmd_long, int long_time) {
     char * fragment = NULL;
-    if (strlen(cmd) > 4)
-        return -1;
-    
+    char * fragment_long = NULL;
+    char * script;
+    char * script_long;
+    char * separator = ":";
+    int cmdtype;
+    int cmd_longtype;
+
     //
-    //  Select fragment for parameter
+    //  Select fragment for short press parameter
     //  Would love to "switch" here but that's not portable...
     //
-    uint32_t code = STRTOU32(cmd);
-    if (code == STRTOU32("PLAY")) {
-        fragment = FRAGMENT_PAUSE;
-    } else if (code == STRTOU32("VOL+")) {
-        fragment = FRAGMENT_VOLUME_UP;
-    } else if (code == STRTOU32("VOL-")) {
-        fragment = FRAGMENT_VOLUME_DOWN;
-    } else if (code == STRTOU32("PREV")) {
-        fragment = FRAGMENT_PREV;
-    } else if (code == STRTOU32("NEXT")) {
-        fragment = FRAGMENT_NEXT;
-    } else if (code == STRTOU32("POWR")) {
-        fragment = FRAGMENT_POWER;
-    }
-    if (!fragment)
+    if (strlen(cmd) >= 4) {
+        uint32_t code = STRTOU32(cmd);
+        if (code == STRTOU32("PLAY")) {
+            cmdtype = LMS;
+            fragment = FRAGMENT_PAUSE;
+        } else if (code == STRTOU32("VOL+")) {
+            cmdtype = LMS;
+            fragment = FRAGMENT_VOLUME_UP;
+        } else if (code == STRTOU32("VOL-")) {
+            cmdtype = LMS;
+            fragment = FRAGMENT_VOLUME_DOWN;
+        } else if (code == STRTOU32("PREV")) {
+            cmdtype = LMS;
+            fragment = FRAGMENT_PREV;
+        } else if (code == STRTOU32("NEXT")) {
+            cmdtype = LMS;
+            fragment = FRAGMENT_NEXT;
+        } else if (code == STRTOU32("POWR")) {
+            cmdtype = LMS;
+            fragment = FRAGMENT_POWER;
+        }	else if (strncmp("SCRIPT:", cmd, 7) == 0) {
+            cmdtype = SCRIPT;
+            strtok( cmd, separator );
+            script = strtok( NULL, "" );
+            fragment = script;
+        }
+        if (!fragment)
+            return -1;
+    } else {
+        // Cmd string needs to be at least 4 to be valid.
         return -1;
-    
-    struct button * gpio_b = setupbutton(pin, button_press_cb, edge);
+    }
+
+    //
+    //  Select fragment for long press parameter
+    //
+    if ( cmd_long == NULL ) {
+        cmd_longtype = NOTUSED;
+    } else if ( strlen(cmd_long) >= 4 ) {
+        loginfo("Why am I here");
+        uint32_t code = STRTOU32(cmd_long);
+        if (code == STRTOU32("PLAY")) {
+            cmd_longtype = LMS;
+            fragment_long = FRAGMENT_PAUSE;
+        } else if (code == STRTOU32("VOL+")) {
+            cmd_longtype = LMS;
+            fragment_long = FRAGMENT_VOLUME_UP;
+        } else if (code == STRTOU32("VOL-")) {
+            cmd_longtype = LMS;
+            fragment_long = FRAGMENT_VOLUME_DOWN;
+        } else if (code == STRTOU32("PREV")) {
+            cmd_longtype = LMS;
+            fragment_long = FRAGMENT_PREV;
+        } else if (code == STRTOU32("NEXT")) {
+            cmd_longtype = LMS;
+            fragment_long = FRAGMENT_NEXT;
+        } else if (code == STRTOU32("POWR")) {
+            cmd_longtype = LMS;
+            fragment_long = FRAGMENT_POWER;
+        }	else if (strncmp("SCRIPT:", cmd_long, 7) == 0) {
+            cmd_longtype = SCRIPT;
+            strtok( cmd_long, separator );
+            script_long = strtok( NULL, "" );
+            fragment_long = script_long;
+        }
+        if (!fragment_long)
+            cmd_longtype = NOTUSED;
+    }    
+
+    // Make sure resistor setting makes sense, or reset to default
+    if ( (resist != PUD_OFF) && (resist != PUD_DOWN) && (resist == PUD_UP) )
+        resist = PUD_UP;
+
+    struct button * gpio_b = setupbutton(pin, button_press_cb, resist, (bool)(pressed == 0) ? 0 : 1, long_time);
+
+    button_ctrls[numberofbuttons].cmdtype = cmdtype;
     button_ctrls[numberofbuttons].shortfragment = fragment;
+    button_ctrls[numberofbuttons].cmd_longtype = cmd_longtype;
+    button_ctrls[numberofbuttons].longfragment = fragment_long;
     button_ctrls[numberofbuttons].waiting = false;
     button_ctrls[numberofbuttons].gpio_button = gpio_b;
     numberofbuttons++;
-    loginfo("Button defined: Pin %d, Edge: %s, Fragment: \n%s",
+    loginfo("Button defined: Pin %d, BCM Resistor: %s, Short Type: %s, Short Fragment: %s , Long Type: %s, Long Fragment: %s, Long Press Time: %i",
+
             pin,
-            ((edge != INT_EDGE_FALLING) && (edge != INT_EDGE_RISING)) ? "both" :
-            (edge == INT_EDGE_FALLING) ? "falling" : "rising",
-            fragment);
+            (resist == PUD_OFF) ? "both" :
+            (resist == PUD_DOWN) ? "down" : "up",
+            (cmdtype == LMS) ? "LMS" :
+            (cmdtype == SCRIPT) ? "Script" : "unused",
+            fragment,
+            (cmd_longtype == LMS) ? "LMS" :
+            (cmd_longtype == SCRIPT) ? "Script" : "unused",
+            fragment_long,
+            long_time);
     return 0;
 }
 
@@ -146,8 +225,18 @@ void handle_buttons(struct sbpd_server * server) {
     //logdebug("Polling buttons");
     for (int cnt = 0; cnt < numberofbuttons; cnt++) {
         if (button_ctrls[cnt].waiting) {
-            loginfo("Button pressed: Pin: %d, Press Type:%d", button_ctrls[cnt].gpio_button->pin, button_ctrls[cnt].presstype);
-            send_command(server, button_ctrls[cnt].shortfragment);
+            loginfo("Button pressed: Pin: %d, Press Type:%s", button_ctrls[cnt].gpio_button->pin,
+                   (button_ctrls[cnt].presstype == LONGPRESS) ? "Long" : "Short" );
+            if ( button_ctrls[cnt].presstype == SHORTPRESS ) {
+                if ( button_ctrls[cnt].shortfragment != NULL ) {
+                    send_command(server, button_ctrls[cnt].cmdtype, button_ctrls[cnt].shortfragment);
+                }
+            }
+            if ( button_ctrls[cnt].presstype == LONGPRESS ) {
+                if ( button_ctrls[cnt].longfragment != NULL ) {
+                    send_command(server, button_ctrls[cnt].cmd_longtype, button_ctrls[cnt].longfragment);
+                }
+            }
             button_ctrls[cnt].waiting = false;  // clear waiting
         }
     }
@@ -223,6 +312,9 @@ void handle_encoders(struct sbpd_server * server) {
     }*/
     
     //logdebug("Polling encoders");
+
+    int command = LMS;
+
     for (int cnt = 0; cnt < numberofencoders; cnt++) {
         //
         //  build volume delta
@@ -241,8 +333,8 @@ void handle_encoders(struct sbpd_server * server) {
             char * prefix = (delta > 0) ? "+" : "-";
             snprintf(fragment, sizeof(fragment),
                      encoder_ctrls[cnt].fragment, prefix, abs(delta));
-            
-            if (send_command(server, fragment)) {
+
+            if (send_command(server, command, fragment)) {
                 encoder_ctrls[cnt].last_value = encoder_ctrls[cnt].gpio_encoder->value;
                 //lasttimeVol = time; // chatter filter
             }

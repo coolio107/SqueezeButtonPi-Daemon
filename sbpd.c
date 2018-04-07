@@ -86,7 +86,7 @@ static error_t parse_arg();
 static struct argp_option options[] =
 {
     { "mac",       'M', "MAC-Address", 0,
-        "Set MAC address of player. Deafult: autodetect", 0 },
+        "Set MAC address of player. Default: autodetect", 0 },
     { "address",   'A', "Server-Address", 0,
         "Set server address. Default: autodetect", 0 },
     { "port",      'P', "xxxx", 0, "Set server control port. Default: autodetect", 0 },
@@ -101,39 +101,45 @@ static struct argp_option options[] =
 //
 //  ARGS_DOC. Field 3 in ARGP.
 //  Non-Option arguments.
-//  At least one needs to be specified for the daemon to do anything useful
-//  Arguments are a comma-separated list of configuration parameters:
-//  For rotary encoders (one, volume only):
-//      e,pin1,pin2,CMD[,edge]
-//          "e" for "Encoder"
-//          p1, p2: GPIO PIN numbers in BCM-notation
-//          CMD: Command. Unused for encoders, always VOLM for Volume
-//          edge: Optional. one of
-//                  1 - falling edge
-//                  2 - rising edge
-//                  0, 3 - both
-//  For buttons:
-//      b,pin,CMD[,edge]
-//          "b" for "Button"
-//          pin: GPIO PIN numbers in BCM-notation
-//          CMD: Command. One of:
-//              PLAY:   Play/pause
-//              PREV:   Jump to previous track
-//              NEXT:   Jump to next track
-//              VOL+:   Increase volume
-//              VOL-:   Decrease volume
-//              POWR:   Toggle power state
-//          edge: Optional. one of
-//                  1 - falling edge
-//                  2 - rising edge
-//                  0, 3 - both
+static char args_doc[] = "[e,pin1,pin2,CMD,edge] [b,pin,CMD,resist,pressed...]";
 //
-static char args_doc[] = "[e,pin1,pin2,CMD,edge] [b,pin,CMD,edge...]";
 //
 //  DOC.  Field 4 in ARGP.
 //  Program documentation.
 //
-static char doc[] = "sbpd - SqueezeButtinPiDaemon is a button and rotary encoder handling daemon for Raspberry Pi and a Squeezebox player software.\nsbpd connects to a Squeezebox server and sends the configured control commands on behalf of a player running on the RPi.\n<C>2017 Joerg Schwieder/PenguinLovesMusic.com";
+static char doc[] = "sbpd - SqueezeButtinPiDaemon is a button and rotary encoder handling daemon for Raspberry Pi and a Squeezebox player software.\nsbpd connects to a Squeezebox server and sends the configured control commands on behalf of a player running on the RPi.\n<C>2017 Joerg Schwieder/PenguinLovesMusic.com\n\n\
+At least one needs to be specified for the daemon to do anything useful\n\
+Arguments are a comma-separated list of configuration parameters:\n\
+For rotary encoders (one, volume only):\n\
+    e,pin1,pin2,CMD[,edge]\n\
+        \"e\" for \"Encoder\"\n\
+        p1, p2: GPIO PIN numbers in BCM-notation\n\
+        CMD: Command. Unused for encoders, always VOLM for Volume\n\
+        edge: Optional. one of\n\
+                1 - falling edge\n\
+                2 - rising edge\n\
+                0, 3 - both\n\
+For buttons:\n\
+    b,pin,CMD[,resist,pressed]\n\
+        \"b\" for \"Button\"\n\
+         pin:  GPIO PIN numbers in BCM-notation\n\
+         CMD: Command. One of\n\
+                    PLAY    - play/pause\n\
+                    VOL+    - increment volume\n\
+                    VOL-    - decrement volume\n\
+                    PREV    - previous track\n\
+                    NEXT    - next track\n\
+              Command type SCRIPT.\n\
+                    SCRIPT:/path/to/shell/script.sh\n\
+         resist: Optional. one of\n\
+              0 - Internal resistor off\n\
+              1 - pull down         - input puts 3v on GPIO pin\n\
+              2 - pull up (default) - input pulls GPIO pin to ground\n\
+         pressed: Optional GPIO pinstate for button to read pressed\n\
+              0 - state is 0 (default)\n\
+              1 - state is 1\n\
+         CMD_LONG: Command to be used for a long button push, see above list\n\
+         long_time: Number of milliseconds for a long button press\n";
 //
 //  ARGP parsing structure
 //
@@ -310,7 +316,7 @@ parse_opt (int key, char *arg, struct argp_state *state)
             loginfo("Options parsing: Manually set http password");
             configured_parameters |= SBPD_cfg_password;
             break;
-            
+
         case ARGP_KEY_ARG:
             if (arg_element_count == (max_encoders + max_buttons)) {
                 logerr("Too many control elements defined");
@@ -342,21 +348,26 @@ parse_opt (int key, char *arg, struct argp_state *state)
 //                  2 - rising edge
 //                  0, 3 - both
 //  For buttons:
-//      b,pin,CMD[,edge]
+//      b,pin,CMD[,resist,pressed,CMD_LONG]
 //          "b" for "Button"
-//          pin: GPIO PIN numbers in BCM-notation
-//          CMD: Command. One of:
-//              PLAY:   Play/pause
-//              PREV:   Jump to previous track
-//              NEXT:   Jump to next track
-//              VOL+:   Increase volume
-//              VOL-:   Decrease volume
-//              POWR:   Toggle power state
-//          edge: Optional. one of
-//                  1 - falling edge
-//                  2 - rising edge
-//                  0, 3 - both
-//
+//           pin:  GPIO PIN numbers in BCM-notation
+//           CMD: Command. One of
+//                      PLAY    - play/pause
+//                      VOL+    - increment volume
+//                      VOL-    - decrement volume
+//                      PREV    - previous track
+//                      NEXT    - next track
+//                Command type SCRIPT.
+//                      SCRIPT:/path/to/shell/script.sh
+//           resist: Optional. one of
+//                0 - Internal resistor off
+//                1 - pull down         - input puts 3v on GPIO pin
+//                2 - pull up (default) - input pulls GPIO pin to ground
+//           pressed: Optional GPIO pinstate for button to read pressed
+//                0 - state is 0 (default)
+//                1 - state is 1
+//           CMD_LONG: Command to be used for a long button push, see above command list
+//           long_time: Number of milliseconds to define a long press
 //
 static error_t parse_arg() {
     for (int arg_num = 0; arg_num < arg_element_count; arg_num++) {
@@ -389,11 +400,23 @@ static error_t parse_arg() {
                     if (string)
                         pin = (int)strtol(string, NULL, 10);
                     char * cmd = strtok(NULL, ",");
+                    int resist = 2;
                     string = strtok(NULL, ",");
-                    int edge = 0;
                     if (string)
-                        edge = (int)strtol(string, NULL, 10);
-                    setup_button_ctrl(cmd, pin, edge);
+                        resist = (int)strtol(string, NULL, 10);
+                    bool pressed = 0;
+                    string = strtok(NULL, ",");
+                    if (string)
+                        pressed = (int)strtol(string, NULL, 10);
+                    char * cmd_long = NULL;
+                    if (string)
+                        cmd_long = strtok(NULL, ",");
+                    string = strtok(NULL, ",");
+                    uint32_t long_time=3000;
+                    if (string)
+                        long_time = (int)strtol(string, NULL, 10);
+
+                    setup_button_ctrl(cmd, pin, resist, pressed, cmd_long, long_time);
                 }
                     break;
                     

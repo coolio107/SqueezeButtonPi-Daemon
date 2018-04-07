@@ -45,27 +45,31 @@ struct button_ctrl
 {
     struct button * gpio_button;
     volatile bool waiting;
-	char * shortfragment;
+    char * shortfragment;
     char * longfragment;
-	bool presstype;
+    bool presstype;
+    int cmdtype;
+    int cmd_longtype;
 };
 
 //
 //  Setup button control
 //  Parameters:
-//      cmd: Command. One of
+//      cmd: Command type LMS. One of
 //                  PLAY    - play/pause
 //                  VOL+    - increment volume
 //                  VOL-    - decrement volume
 //                  PREV    - previous track
 //                  NEXT    - next track
+//          Command type SCRIPT.
+//                  SCRIPT:/path/to/shell/script.sh
 //      pin: the GPIO-Pin-Number
 //      edge: one of
 //                  1 - falling edge
 //                  2 - rising edge
 //                  0, 3 - both
 //
-int setup_button_ctrl(char * cmd, int pin, int edge);
+int setup_button_ctrl(char * cmd, int pin, int resist, int pressed, char * cmd_long, int long_time);
 
 //
 //  Polling function: handle button commands
