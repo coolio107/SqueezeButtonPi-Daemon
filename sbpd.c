@@ -138,8 +138,8 @@ For buttons:\n\
          pressed: Optional GPIO pinstate for button to read pressed\n\
               0 - state is 0 (default)\n\
               1 - state is 1\n\
-         CMD_LONG: Command to be used for a long button push, see above command list\n\n";
-
+         CMD_LONG: Command to be used for a long button push, see above list\n\
+         long_time: Number of milliseconds for a long button press\n";
 //
 //  ARGP parsing structure
 //

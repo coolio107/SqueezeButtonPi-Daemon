@@ -104,7 +104,7 @@ void button_press_cb(const struct button * button, int change, bool presstype) {
 //          0 - state is 0 (default)
 //          1 - state is 1
 //      cmd_long Command to be used for a long button push, see above command list
-//
+//      long_time: Number of milliseconds to define a long press
 
 int setup_button_ctrl(char * cmd, int pin, int resist, int pressed, char * cmd_long, int long_time) {
     char * fragment = NULL;
