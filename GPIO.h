@@ -76,6 +76,7 @@ struct button {
     button_callback_t callback;
     uint32_t timepressed;
     bool pressed;
+    int long_press_time;
 };
 
 //
@@ -96,7 +97,8 @@ struct button {
 struct button *setupbutton(int pin,
                            button_callback_t callback,
                            int resist,
-                           bool pressed);
+                           bool pressed,
+                           int long_press_time);
 
 
 struct encoder;

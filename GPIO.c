@@ -62,15 +62,9 @@ uint32_t gettime_ms(void) {
 }
 
 //
-// number of milliseconds to activate a press.
-// shortpress is between NOPRESS and LONGPRESS
-// These need to be configurable.......later on.
+// number of milliseconds to debounce the button
 //
 #define NOPRESSTIME 50
-#define LONGPRESSTIME 3000
-//#define PRESSED 0
-//#define PRESSED 1
-
 //
 //
 //  Button handler function
@@ -89,24 +83,19 @@ void updateButtons()
 	{
 		bool bit = digitalRead(button->pin);
 		bool presstype;
-		loginfo("%lu - %lu  Pin Value=%i   Stored Value=%i", (unsigned long)now, (unsigned long)button->timepressed, bit, button->value);
+		logdebug("%lu - %lu  Pin Value=%i   Stored Value=%i", (unsigned long)now, (unsigned long)button->timepressed, bit, button->value);
 
 		int increment = 0;
-/*		// same? no increment
-		if (button->value != bit){
-			increment = (bit) ? 1 : -1; // Increemnt and current state true: positive increment
-		} 
-*/
 		if (bit == button->pressed){
 			if (button->timepressed == 0){	
 				button->timepressed = now;
 				increment = 0;
 			} 
 		} else {
-			if ((now - button->timepressed) < NOPRESSTIME ) {
-				loginfo("No PRESS: %i", (now - button->timepressed));
+			if ((signed int)(now - button->timepressed) < (signed int)NOPRESSTIME ) {
+				logdebug("No PRESS: %i", (now - button->timepressed));
 				increment = 0;
-			} else if ((now - button->timepressed) > LONGPRESSTIME ) {
+			} else if ((signed int)(now - button->timepressed) > (signed int)button->long_press_time ) {
 				loginfo("Long PRESS: %i", (now - button->timepressed));
 				button->value = bit;
 				presstype = LONGPRESS;
@@ -139,7 +128,7 @@ void updateButtons()
 //           The pointer will be NULL is the function failed for any reason
 //
 //
-struct button *setupbutton(int pin, button_callback_t callback, int resist, bool pressed)
+struct button *setupbutton(int pin, button_callback_t callback, int resist, bool pressed, int long_press_time)
 {
     if (numberofbuttons > max_buttons)
     {
@@ -155,6 +144,7 @@ struct button *setupbutton(int pin, button_callback_t callback, int resist, bool
     newbutton->callback = callback;
     newbutton->timepressed = 0;
     newbutton->pressed = pressed;
+    newbutton->long_press_time = long_press_time;
     pinMode(pin, INPUT);
     pullUpDnControl(pin, resist);
     wiringPiISR(pin,edge, updateButtons);

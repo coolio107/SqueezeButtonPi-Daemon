@@ -106,7 +106,7 @@ void button_press_cb(const struct button * button, int change, bool presstype) {
 //      cmd_long Command to be used for a long button push, see above command list
 //
 
-int setup_button_ctrl(char * cmd, int pin, int resist, int pressed, char * cmd_long) {
+int setup_button_ctrl(char * cmd, int pin, int resist, int pressed, char * cmd_long, int long_time) {
     char * fragment = NULL;
     char * fragment_long = NULL;
     char * script;
@@ -192,7 +192,7 @@ int setup_button_ctrl(char * cmd, int pin, int resist, int pressed, char * cmd_l
     if ( (resist != PUD_OFF) && (resist != PUD_DOWN) && (resist == PUD_UP) )
         resist = PUD_UP;
 
-    struct button * gpio_b = setupbutton(pin, button_press_cb, resist, (bool)(pressed == 0) ? 0 : 1);
+    struct button * gpio_b = setupbutton(pin, button_press_cb, resist, (bool)(pressed == 0) ? 0 : 1, long_time);
 
     button_ctrls[numberofbuttons].cmdtype = cmdtype;
     button_ctrls[numberofbuttons].shortfragment = fragment;
@@ -201,7 +201,7 @@ int setup_button_ctrl(char * cmd, int pin, int resist, int pressed, char * cmd_l
     button_ctrls[numberofbuttons].waiting = false;
     button_ctrls[numberofbuttons].gpio_button = gpio_b;
     numberofbuttons++;
-    loginfo("Button defined: Pin %d, BCM Resistor: %s, Short Type: %s, Short Fragment: %s , Long Type: %s, Long Fragment: %s",
+    loginfo("Button defined: Pin %d, BCM Resistor: %s, Short Type: %s, Short Fragment: %s , Long Type: %s, Long Fragment: %s, Long Press Time: %i",
 
             pin,
             (resist == PUD_OFF) ? "both" :
@@ -211,7 +211,8 @@ int setup_button_ctrl(char * cmd, int pin, int resist, int pressed, char * cmd_l
             fragment,
             (cmd_longtype == LMS) ? "LMS" :
             (cmd_longtype == SCRIPT) ? "Script" : "unused",
-            fragment_long);
+            fragment_long,
+            long_time);
     return 0;
 }
 
@@ -224,7 +225,8 @@ void handle_buttons(struct sbpd_server * server) {
     //logdebug("Polling buttons");
     for (int cnt = 0; cnt < numberofbuttons; cnt++) {
         if (button_ctrls[cnt].waiting) {
-            loginfo("Button pressed: Pin: %d, Press Type:%d", button_ctrls[cnt].gpio_button->pin, button_ctrls[cnt].presstype);
+            loginfo("Button pressed: Pin: %d, Press Type:%s", button_ctrls[cnt].gpio_button->pin,
+                   (button_ctrls[cnt].presstype == LONGPRESS) ? "Long" : "Short" );
             if ( button_ctrls[cnt].presstype == SHORTPRESS ) {
                 if ( button_ctrls[cnt].shortfragment != NULL ) {
                     send_command(server, button_ctrls[cnt].cmdtype, button_ctrls[cnt].shortfragment);

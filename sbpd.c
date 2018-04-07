@@ -366,7 +366,8 @@ parse_opt (int key, char *arg, struct argp_state *state)
 //           pressed: Optional GPIO pinstate for button to read pressed
 //                0 - state is 0 (default)
 //                1 - state is 1
-//           CMD_LONG Command to be used for a long button push, see above command list
+//           CMD_LONG: Command to be used for a long button push, see above command list
+//           long_time: Number of milliseconds to define a long press
 //
 static error_t parse_arg() {
     for (int arg_num = 0; arg_num < arg_element_count; arg_num++) {
@@ -410,8 +411,12 @@ static error_t parse_arg() {
                     char * cmd_long = NULL;
                     if (string)
                         cmd_long = strtok(NULL, ",");
+                    string = strtok(NULL, ",");
+                    uint32_t long_time=3000;
+                    if (string)
+                        long_time = (int)strtol(string, NULL, 10);
 
-                    setup_button_ctrl(cmd, pin, resist, pressed, cmd_long);
+                    setup_button_ctrl(cmd, pin, resist, pressed, cmd_long, long_time);
                 }
                     break;
                     
