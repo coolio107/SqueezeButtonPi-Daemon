@@ -71,7 +71,7 @@ Arguments are a comma-separated list of configuration parameters:
                   2 - rising edge
                   0, 3 - both
     For buttons: 
-        b,pin,CMD[,edge]
+        b,pin,CMD[,resist,pressed,CMD_LONG,long_time]
             "b" for "Button"
             pin: GPIO PIN numbers in BCM-notation
             CMD: Command. One of:
@@ -81,11 +81,17 @@ Arguments are a comma-separated list of configuration parameters:
                 VOL+:   Increase volume
                 VOL-:   Decrease volume
                 POWR:   Toggle power state
-            edge: Optional. one of
-                  1 - falling edge
-                  2 - rising edge
-                  0, 3 - both
-
+            Command type SCRIPT.
+                SCRIPT:/path/to/shell/script.sh
+            resist: Optional. one of
+                0 - Internal resistor off
+                1 - pull down         - input puts 3v on GPIO pin
+                2 - pull up (default) - input pulls GPIO pin to ground
+            pressed: Optional GPIO pinstate for button to read pressed
+                0 - state is 0 (default)
+                1 - state is 1
+            CMD_LONG: Command to be used for a long button push, see above command list
+            long_time: Number of milliseconds to define a long press
 
 ## Security
 
