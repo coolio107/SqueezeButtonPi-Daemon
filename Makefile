@@ -12,7 +12,7 @@ OBJECTS = $(SOURCES:.c=.o)
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
+	$(CC) $(OBJECTS) $(LDFLAGS) -o $@ 
 
 $(OBJECTS): $(DEPS)
 

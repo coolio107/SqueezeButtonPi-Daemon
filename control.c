@@ -58,12 +58,37 @@ static int numberofencoders = 0;
 //
 //  Buttons
 //
-#define FRAGMENT_PAUSE          "[\"pause\"]"
+/*#define FRAGMENT_PAUSE          "[\"pause\"]"
 #define FRAGMENT_VOLUME_UP      "[\"button\",\"volup\"]"
 #define FRAGMENT_VOLUME_DOWN    "[\"button\",\"voldown\"]"
 #define FRAGMENT_PREV           "[\"button\",\"rew\"]"
 #define FRAGMENT_NEXT           "[\"button\",\"fwd\"]"
 #define FRAGMENT_POWER           "[\"button\",\"power\"]"
+*/
+//
+//  LMS Command structure
+//
+static struct lms_command lms_commands[MAX_COMMANDS];
+static int numberofcommands = 0;
+
+int add_lms_command_frament ( char * name, char * value ) {
+    loginfo("Adding Command %s: Fragment %s", name, value);
+    lms_commands[numberofcommands].code = STRTOU32(name);
+    strncpy (lms_commands[numberofcommands].fragment, value, MAXLEN);
+    numberofcommands ++;
+    if (numberofcommands > MAX_COMMANDS )
+        return 1;
+    return 0;
+}
+
+char * get_lms_command_fragment ( int code ) {
+    for (int i = 0; i < numberofcommands; i++) {
+        if ( code == lms_commands[i].code )
+            return lms_commands[i].fragment;
+    }
+    return NULL;
+}
+
 //
 //  Encoder
 //
@@ -117,9 +142,24 @@ int setup_button_ctrl(char * cmd, int pin, int resist, int pressed, char * cmd_l
 
     //
     //  Select fragment for short press parameter
+    //
+    if (strlen(cmd) == 4) {
+        fragment = get_lms_command_fragment(STRTOU32(cmd));
+        cmdtype = LMS;
+    } else if (strncmp("SCRIPT:", cmd, 7) == 0) {
+        cmdtype = SCRIPT;
+        strtok( cmd, separator );
+        script = strtok( NULL, "" );
+        fragment = script;
+    }
+    if (!fragment){
+        loginfo("Command %s, not found in defined commands", cmd);
+        return -1;
+    }
+    
     //  Would love to "switch" here but that's not portable...
     //
-    if (strlen(cmd) >= 4) {
+/*    if (strlen(cmd) >= 4) {
         uint32_t code = STRTOU32(cmd);
         if (code == STRTOU32("PLAY")) {
             cmdtype = LMS;
@@ -151,14 +191,29 @@ int setup_button_ctrl(char * cmd, int pin, int resist, int pressed, char * cmd_l
         // Cmd string needs to be at least 4 to be valid.
         return -1;
     }
-
+*/
     //
     //  Select fragment for long press parameter
     //
     if ( cmd_long == NULL ) {
         cmd_longtype = NOTUSED;
+    } else if ( strlen(cmd_long) == 4 ) {
+        fragment_long = get_lms_command_fragment(STRTOU32(cmd_long));
+    } else if (strncmp("SCRIPT:", cmd_long, 7) == 0) {
+        cmd_longtype = SCRIPT;
+        strtok( cmd_long, separator );
+        script_long = strtok( NULL, "" );
+        fragment_long = script_long;
+    }
+    if (!fragment_long){
+        loginfo("Command %s, not found in defined commands", cmd);
+        cmd_longtype = NOTUSED;
+    }
+   
+/*
+    if ( cmd_long == NULL ) {
+        cmd_longtype = NOTUSED;
     } else if ( strlen(cmd_long) >= 4 ) {
-        loginfo("Why am I here");
         uint32_t code = STRTOU32(cmd_long);
         if (code == STRTOU32("PLAY")) {
             cmd_longtype = LMS;
@@ -187,7 +242,7 @@ int setup_button_ctrl(char * cmd, int pin, int resist, int pressed, char * cmd_l
         if (!fragment_long)
             cmd_longtype = NOTUSED;
     }    
-
+*/
     // Make sure resistor setting makes sense, or reset to default
     if ( (resist != PUD_OFF) && (resist != PUD_DOWN) && (resist == PUD_UP) )
         resist = PUD_UP;

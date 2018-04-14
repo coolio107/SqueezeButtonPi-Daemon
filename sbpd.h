@@ -45,6 +45,7 @@
 
 #define USER_AGENT  "SqueezeButtonPi"
 #define VERSION     "1.0"
+#define CONFIG_FILE "sbpd_commands.cfg"
 
 // configuration parameters.
 // used to flag pre-configured or detected parameters
@@ -97,6 +98,9 @@ struct sbpd_server {
 //  Helpers
 //
 #define STRTOU32(x) (*((uint32_t *)x))  // make a 32 bit integer from a 4 char string
+
+void parse_config();
+char * trim (char * s);
 
 //
 //  Logging
