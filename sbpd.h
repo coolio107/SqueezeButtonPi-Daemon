@@ -45,7 +45,6 @@
 
 #define USER_AGENT  "SqueezeButtonPi"
 #define VERSION     "1.0"
-#define CONFIG_FILE "sbpd_commands.cfg"
 
 // configuration parameters.
 // used to flag pre-configured or detected parameters
@@ -55,7 +54,8 @@ typedef enum {
     SBPD_cfg_port = 0x2,
     SBPD_cfg_user = 0x4,
     SBPD_cfg_password = 0x8,
-    
+    SBPD_cfg_config = 0x16,
+		
     // player
     SBPD_cfg_MAC = 0x1000,
 } sbpd_config_parameters_t;
@@ -85,6 +85,7 @@ struct sbpd_server {
     uint32_t    port;
     char *      user;
     char *      password;
+    char *      config_file;
 };
 
 //

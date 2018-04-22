@@ -157,41 +157,6 @@ int setup_button_ctrl(char * cmd, int pin, int resist, int pressed, char * cmd_l
         return -1;
     }
     
-    //  Would love to "switch" here but that's not portable...
-    //
-/*    if (strlen(cmd) >= 4) {
-        uint32_t code = STRTOU32(cmd);
-        if (code == STRTOU32("PLAY")) {
-            cmdtype = LMS;
-            fragment = FRAGMENT_PAUSE;
-        } else if (code == STRTOU32("VOL+")) {
-            cmdtype = LMS;
-            fragment = FRAGMENT_VOLUME_UP;
-        } else if (code == STRTOU32("VOL-")) {
-            cmdtype = LMS;
-            fragment = FRAGMENT_VOLUME_DOWN;
-        } else if (code == STRTOU32("PREV")) {
-            cmdtype = LMS;
-            fragment = FRAGMENT_PREV;
-        } else if (code == STRTOU32("NEXT")) {
-            cmdtype = LMS;
-            fragment = FRAGMENT_NEXT;
-        } else if (code == STRTOU32("POWR")) {
-            cmdtype = LMS;
-            fragment = FRAGMENT_POWER;
-        }	else if (strncmp("SCRIPT:", cmd, 7) == 0) {
-            cmdtype = SCRIPT;
-            strtok( cmd, separator );
-            script = strtok( NULL, "" );
-            fragment = script;
-        }
-        if (!fragment)
-            return -1;
-    } else {
-        // Cmd string needs to be at least 4 to be valid.
-        return -1;
-    }
-*/
     //
     //  Select fragment for long press parameter
     //
@@ -199,50 +164,18 @@ int setup_button_ctrl(char * cmd, int pin, int resist, int pressed, char * cmd_l
         cmd_longtype = NOTUSED;
     } else if ( strlen(cmd_long) == 4 ) {
         fragment_long = get_lms_command_fragment(STRTOU32(cmd_long));
+        cmd_longtype = LMS;
     } else if (strncmp("SCRIPT:", cmd_long, 7) == 0) {
         cmd_longtype = SCRIPT;
         strtok( cmd_long, separator );
         script_long = strtok( NULL, "" );
         fragment_long = script_long;
     }
-    if (!fragment_long){
-        loginfo("Command %s, not found in defined commands", cmd);
+    if ( (cmd_long != NULL) & (!fragment_long) ){
+        loginfo("Command %s, not found in defined commands", cmd_long);
         cmd_longtype = NOTUSED;
     }
    
-/*
-    if ( cmd_long == NULL ) {
-        cmd_longtype = NOTUSED;
-    } else if ( strlen(cmd_long) >= 4 ) {
-        uint32_t code = STRTOU32(cmd_long);
-        if (code == STRTOU32("PLAY")) {
-            cmd_longtype = LMS;
-            fragment_long = FRAGMENT_PAUSE;
-        } else if (code == STRTOU32("VOL+")) {
-            cmd_longtype = LMS;
-            fragment_long = FRAGMENT_VOLUME_UP;
-        } else if (code == STRTOU32("VOL-")) {
-            cmd_longtype = LMS;
-            fragment_long = FRAGMENT_VOLUME_DOWN;
-        } else if (code == STRTOU32("PREV")) {
-            cmd_longtype = LMS;
-            fragment_long = FRAGMENT_PREV;
-        } else if (code == STRTOU32("NEXT")) {
-            cmd_longtype = LMS;
-            fragment_long = FRAGMENT_NEXT;
-        } else if (code == STRTOU32("POWR")) {
-            cmd_longtype = LMS;
-            fragment_long = FRAGMENT_POWER;
-        }	else if (strncmp("SCRIPT:", cmd_long, 7) == 0) {
-            cmd_longtype = SCRIPT;
-            strtok( cmd_long, separator );
-            script_long = strtok( NULL, "" );
-            fragment_long = script_long;
-        }
-        if (!fragment_long)
-            cmd_longtype = NOTUSED;
-    }    
-*/
     // Make sure resistor setting makes sense, or reset to default
     if ( (resist != PUD_OFF) && (resist != PUD_DOWN) && (resist == PUD_UP) )
         resist = PUD_UP;

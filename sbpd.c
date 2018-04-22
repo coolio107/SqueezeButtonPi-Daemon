@@ -85,6 +85,7 @@ static error_t parse_arg();
 //
 static struct argp_option options[] =
 {
+    { "conf_file", 'f', "</path/config-file>", 0, "Full path to command configuration file", 0},
     { "mac",       'M', "MAC-Address", 0,
         "Set MAC address of player. Default: autodetect", 0 },
     { "address",   'A', "Server-Address", 0,
@@ -96,6 +97,7 @@ static struct argp_option options[] =
     { "silent",    's', 0, 0, "Don't produce output", 1 },
     { "daemonize", 'd', 0, 0, "Daemonize", 1 },
     { "kill",      'k', 0, 0, "Kill daemon", 1 },
+	{ "debug",     'z', 0, 0, "Produce degub output", 1 },
     {0}
 };
 //
@@ -129,8 +131,8 @@ For buttons:\n\
                     VOL-    - decrement volume\n\
                     PREV    - previous track\n\
                     NEXT    - next track\n\
-              Commands can be redefined in "CONFIG_FILE"\n\
-                    located in your home directory\n\
+              Commands can be defined in config file\n\
+                    use -f option, ref:sbpd_commands.cfg \n\
               Command type SCRIPT.\n\
                     SCRIPT:/path/to/shell/script.sh\n\
          resist: Optional. one of\n\
@@ -274,6 +276,11 @@ parse_opt (int key, char *arg, struct argp_state *state)
             streamloglevel = LOG_INFO;
             loginfo("Options parsing: Set verbose mode");
             break;
+            //  Debug mode
+        case 'z':
+            streamloglevel = LOG_DEBUG;
+            loginfo("Options parsing: Set debug mode");
+            break;
             //  Silent Mode
         case 's':
             streamloglevel = 0;
@@ -317,13 +324,18 @@ parse_opt (int key, char *arg, struct argp_state *state)
             loginfo("Options parsing: Manually set user name");
             configured_parameters |= SBPD_cfg_user;
             break;
-            //  Server user name
+            //  Server password
         case 'p':
             server.password = arg;
             loginfo("Options parsing: Manually set http password");
             configured_parameters |= SBPD_cfg_password;
             break;
-
+        // Server Configuration file for button commands
+        case 'f':
+            server.config_file = arg;
+            loginfo("Options parsing: Setting command config file to %s", server.config_file);
+            configured_parameters |= SBPD_cfg_config;
+            break;
         case ARGP_KEY_ARG:
             if (arg_element_count == (max_encoders + max_buttons)) {
                 logerr("Too many control elements defined");
@@ -437,21 +449,19 @@ static error_t parse_arg() {
 
 void parse_config() {
     char *s, buff[256];
-    char file[1024];
-    
-    //Look for config file in the users home directory 
-    strcpy( file, getenv("HOME"));
-    strcat( file, "/");
-    strcat( file, CONFIG_FILE);
-    FILE *fp = fopen ( file, "r");
+    FILE *fp = NULL;
+    if (configured_parameters & SBPD_cfg_config) {
+        fp = fopen ( server.config_file, "r");
+        if (fp == NULL) loginfo("Config file %s : not found", server.config_file);
+    }
     if (fp == NULL) {
-        loginfo("Config file %s : not found, using builtin config", file);
+        loginfo("Using builtin button configuration");
         add_lms_command_frament ( "PLAY", "[\"pause\"]" );
-        add_lms_command_frament ( "VOL+", "[\"button\",\"volup\"]");
-        add_lms_command_frament ( "VOL-", "[\"button\",\"voldown\"]");
-        add_lms_command_frament ( "PREV", "[\"button\",\"rew\"]");
-        add_lms_command_frament ( "NEXT", "[\"button\",\"fwd\"]");
-        add_lms_command_frament ( "POWR", "[\"button\",\"power\"]");
+        add_lms_command_frament ( "VOL+", "[\"button\",\"volup\"]" );
+        add_lms_command_frament ( "VOL-", "[\"button\",\"voldown\"]" );
+        add_lms_command_frament ( "PREV", "[\"button\",\"rew\"]" );
+        add_lms_command_frament ( "NEXT", "[\"button\",\"fwd\"]" );
+        add_lms_command_frament ( "POWR", "[\"button\",\"power\"]" );
         return;
     }
     //Start reading file, line by line
