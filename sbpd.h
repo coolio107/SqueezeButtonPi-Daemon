@@ -54,8 +54,8 @@ typedef enum {
     SBPD_cfg_port = 0x2,
     SBPD_cfg_user = 0x4,
     SBPD_cfg_password = 0x8,
-    SBPD_cfg_config = 0x16,
-		
+    SBPD_cfg_config = 0x10,
+
     // player
     SBPD_cfg_MAC = 0x1000,
 } sbpd_config_parameters_t;
@@ -69,6 +69,7 @@ typedef enum {
 
 // supported commands
 // need to be configured
+/* Not in Use
 typedef enum {
     SBPD_cmd_volume = 0x1,
     SBPD_cmd_pause = 0x2,
@@ -76,7 +77,7 @@ typedef enum {
     SBPD_cmd_prev = 0x8,
     SBPD_cmd_power = 0x10,
 } sbpd_commands_t;
-
+*/
 
 // server configuration data structure
 // contains address and user/password
