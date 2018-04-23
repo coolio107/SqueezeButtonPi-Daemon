@@ -1,8 +1,10 @@
 CC = gcc
-CFLAGS  = -Wall -fPIC -s -O3 -march=armv6 -mfloat-abi=hard -mfpu=vfp -I./include
+CFLAGS  = -Wall -fPIC -std=gnu99 -s -O3 -I/usr/local/include -Wl,-rpath,/usr/local/lib
 LDFLAGS = -L./lib -Wl,-rpath,/usr/local/lib -lcurl -lwiringPi
-#LDFLAGS = -L./lib -Wl,-rpath,/usr/local/lib /usr/local/lib/libcurl.a /usr/local/lib/libnettle.a /usr/local/lib/libssh2.a /usr/local/lib/libgcrypt.a /usr/local/lib/libgnutls.a /usr/local/lib/libidn.a /usr/local/lib/libgpg-error.a /usr/local/lib/libtasn1.a -lwiringPi 
+STATIC_LDFLAGS = -lpthread -ldl -lwiringPi ./libs/libcurl.a /usr/local/lib/libssl.a /usr/local/lib/libcrypto.a /usr/lib/libz.a
+
 EXECUTABLE = sbpd
+EXECUTABLE-STATIC_CURL = sbpd-static
 
 SOURCES = control.c discovery.c GPIO.c sbpd.c servercomm.c
 DEPS = control.h discovery.h GPIO.h sbpd.h servercomm.h
@@ -11,8 +13,14 @@ OBJECTS = $(SOURCES:.c=.o)
 
 all: $(EXECUTABLE)
 
+static: $(EXECUTABLE-STATIC_CURL)
+
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
+
+$(EXECUTABLE-STATIC_CURL): $(OBJECTS)
+	$(CC) $(OBJECTS) $(STATIC_LDFLAGS) -o $@
+	strip --strip-unneeded $(EXECUTABLE-STATIC_CURL)
 
 $(OBJECTS): $(DEPS)
 
@@ -20,4 +28,4 @@ $(OBJECTS): $(DEPS)
 	$(CC) $(CFLAGS) $< -c -o $@
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE)
+	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE-STATIC_CURL)

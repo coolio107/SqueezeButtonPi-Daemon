@@ -283,8 +283,10 @@ void send_discovery(uint32_t address) {
     
     char * data = "eIPAD\0NAME\0JSON\0UUID\0\0\0";
     
-    ssize_t error;
+    size_t error;
     error = sendto(udpSocket, data, SIZE_SERVER_DISCOVERY_LONG, 0, (struct sockaddr*)&addr4, sizeof(addr4));
+    if (error == -1)
+        loginfo("Error sending discovery packet");
 }
 
 
@@ -317,8 +319,8 @@ uint32_t read_discovery(uint32_t address) {
     
     logdebug("Server discovery: packet found");
     unsigned int pos = 1;
-    char code[5];
-    code[4] = 0;
+//    char code[5];
+//    code[4] = 0;
     // this is the whole packet interpretation for debug purposes
     // not needed in final code
     char port[6];

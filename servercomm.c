@@ -71,8 +71,8 @@ static struct curl_slist * headerList = NULL;
 //
 //
 bool send_command(struct sbpd_server * server, int command, char * fragment) {
-     loginfo("Send Command:%d, Fragment:%s\n", command, fragment);
-	 if ( command == LMS ) {
+    loginfo("Send Command:%d, Fragment:%s\n", command, fragment);
+    if ( command == LMS ) {
         if (!curl)
             return false;
 
@@ -92,13 +92,19 @@ bool send_command(struct sbpd_server * server, int command, char * fragment) {
         //  target setup. We call an IPv4 ip so we need to replace a default host
         //
         struct curl_slist * targetList = NULL;
+        
         curl_easy_setopt(curl, CURLOPT_URL, SERVER_ADDRESS_TEMPLATE);
         char target[100];
         snprintf(target, sizeof(target), "::%s:%d", server->host, server->port);
         //logdebug("Command Target: %s", target);
         targetList = curl_slist_append(targetList, target);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
         curl_easy_setopt(curl, CURLOPT_CONNECT_TO, targetList);
 
+        // Setup an error buffer to log errors
+        char errbuf[CURL_ERROR_SIZE];
+        curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
+        errbuf[0] = 0;
         //
         //  username/password?
         //
@@ -123,7 +129,14 @@ bool send_command(struct sbpd_server * server, int command, char * fragment) {
         //  Note: one could retrieve a result here since all communication is synchronous!
         //
         CURLcode res = curl_easy_perform(curl);
-        logdebug("Curl result: %d", res);
+        if(res != CURLE_OK) {
+            size_t len = strlen(errbuf);
+            loginfo("Curl Error: (%d) ", res);
+            if(len)
+                loginfo( "%s%s", errbuf,((errbuf[len - 1] != '\n') ? "\n" : ""));
+            else
+                loginfo( "%s\n", curl_easy_strerror(res));
+        }
         curl_slist_free_all(targetList);
         targetList = NULL;
 
@@ -132,11 +145,11 @@ bool send_command(struct sbpd_server * server, int command, char * fragment) {
     } else if ( command == SCRIPT ) {
         char * cmdline = (char *) malloc(strlen(fragment));
         int err;
-		strcpy( cmdline, fragment);
-		loginfo("Sending commandline: %s\n", cmdline);
+        strcpy( cmdline, fragment);
+        loginfo("Sending commandline: %s\n", cmdline);
         if ((err = system(cmdline)) != 0){
             loginfo ("%s exit status = %d\n", cmdline, err);
-				return false;
+                return false;
         }
         free (cmdline);
     }

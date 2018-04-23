@@ -85,6 +85,7 @@ static error_t parse_arg();
 //
 static struct argp_option options[] =
 {
+    { "conf_file", 'f', "</path/config-file>", 0, "Full path to command configuration file", 0},
     { "mac",       'M', "MAC-Address", 0,
         "Set MAC address of player. Default: autodetect", 0 },
     { "address",   'A', "Server-Address", 0,
@@ -95,7 +96,8 @@ static struct argp_option options[] =
     { "verbose",   'v', 0, 0, "Produce verbose output", 1 },
     { "silent",    's', 0, 0, "Don't produce output", 1 },
     { "daemonize", 'd', 0, 0, "Daemonize", 1 },
-    { "kill",      'k', 0, 0, "Kill daemon", 1 },
+//    { "kill",      'k', 0, 0, "Kill daemon", 1 },
+    { "debug",     'z', 0, 0, "Produce degub output", 1 },
     {0}
 };
 //
@@ -123,12 +125,14 @@ For buttons:\n\
     b,pin,CMD[,resist,pressed]\n\
         \"b\" for \"Button\"\n\
          pin:  GPIO PIN numbers in BCM-notation\n\
-         CMD: Command. One of\n\
+         CMD: Command. One of.\n\
                     PLAY    - play/pause\n\
                     VOL+    - increment volume\n\
                     VOL-    - decrement volume\n\
                     PREV    - previous track\n\
                     NEXT    - next track\n\
+              Commands can be defined in config file\n\
+                    use -f option, ref:sbpd_commands.cfg \n\
               Command type SCRIPT.\n\
                     SCRIPT:/path/to/shell/script.sh\n\
          resist: Optional. one of\n\
@@ -152,7 +156,12 @@ int main(int argc, char * argv[]) {
     //
     //  Parse Arguments
     //
+
     argp_parse (&argp, argc, argv, 0, 0, 0);
+    //
+    //  Parse command config file
+    //
+    parse_config();
 
     //
     //  Daemonize
@@ -264,8 +273,13 @@ parse_opt (int key, char *arg, struct argp_state *state)
             //
             //  Verbose mode
         case 'v':
-            loginfo("Options parsing: Set verbose mode");
             streamloglevel = LOG_INFO;
+            loginfo("Options parsing: Set verbose mode");
+            break;
+            //  Debug mode
+        case 'z':
+            streamloglevel = LOG_DEBUG;
+            loginfo("Options parsing: Set debug mode");
             break;
             //  Silent Mode
         case 's':
@@ -310,13 +324,18 @@ parse_opt (int key, char *arg, struct argp_state *state)
             loginfo("Options parsing: Manually set user name");
             configured_parameters |= SBPD_cfg_user;
             break;
-            //  Server user name
+            //  Server password
         case 'p':
             server.password = arg;
             loginfo("Options parsing: Manually set http password");
             configured_parameters |= SBPD_cfg_password;
             break;
-
+        // Server Configuration file for button commands
+        case 'f':
+            server.config_file = arg;
+            loginfo("Options parsing: Setting command config file to %s", server.config_file);
+            configured_parameters |= SBPD_cfg_config;
+            break;
         case ARGP_KEY_ARG:
             if (arg_element_count == (max_encoders + max_buttons)) {
                 logerr("Too many control elements defined");
@@ -367,7 +386,7 @@ parse_opt (int key, char *arg, struct argp_state *state)
 //                0 - state is 0 (default)
 //                1 - state is 1
 //           CMD_LONG: Command to be used for a long button push, see above command list
-//           long_time: Number of milliseconds to define a long press
+//           long_time: Number of millivoid seconds to define a long press
 //
 static error_t parse_arg() {
     for (int arg_num = 0; arg_num < arg_element_count; arg_num++) {
@@ -428,6 +447,58 @@ static error_t parse_arg() {
     return 0;
 }
 
+void parse_config() {
+    char *s, buff[256];
+    FILE *fp = NULL;
+    if (configured_parameters & SBPD_cfg_config) {
+        fp = fopen ( server.config_file, "r");
+        if (fp == NULL) loginfo("Config file %s : not found", server.config_file);
+    }
+    if (fp == NULL) {
+        loginfo("Using builtin button configuration");
+        add_lms_command_frament ( "PLAY", "[\"pause\"]" );
+        add_lms_command_frament ( "VOL+", "[\"button\",\"volup\"]" );
+        add_lms_command_frament ( "VOL-", "[\"button\",\"voldown\"]" );
+        add_lms_command_frament ( "PREV", "[\"button\",\"rew\"]" );
+        add_lms_command_frament ( "NEXT", "[\"button\",\"fwd\"]" );
+        add_lms_command_frament ( "POWR", "[\"button\",\"power\"]" );
+        return;
+    }
+    //Start reading file, line by line
+    while ((s = fgets (buff, sizeof buff, fp)) != NULL) {
+        //Skip blank lines and comments
+        if (buff[0] == '\n' || buff[0] == '#')
+            continue;
+
+        //Parse name/value pair from line
+        // names are 4 characters only.
+        char name[MAXLEN] = "";
+        char value[MAXLEN] = "";
+        s = strtok (buff, "=");
+        if (s==NULL)
+            continue;
+        else
+            strncpy (name, s, 4);
+        s = strtok (NULL, "=");
+        if (s==NULL)
+            continue;
+        else
+            strncpy (value, s, MAXLEN);
+        // Remove beginning and trailing whitespace
+        trim (value);
+
+        loginfo ("name=%s, value=%s", name, value);
+        if (strlen(name) == 4) {  
+            if ( add_lms_command_frament ( name, value ) != 0 ) {  
+                loginfo ("Too many commands in config file, reduce the number of commands");
+                continue;
+            } 
+        } else {
+            loginfo ("Invalid or missing commands in config file.");
+        }
+    }
+    fclose (fp);
+}
 
 //
 //
@@ -435,6 +506,25 @@ static error_t parse_arg() {
 //
 //
 
+//
+// trim: get rid of trailing and leading whitespace, including the trailing "\n" from fgets()
+//
+char * trim (char * s) {
+    // Initialize start, end pointers
+    char *s1 = s, *s2 = &s[strlen (s) - 1];
+    // Trim and delimit right side
+    while ( (isspace (*s2)) && (s2 >= s1) )
+        s2--;
+    *(s2+1) = '\0';
+
+    // Trim left side
+    while ( (isspace (*s1)) && (s1 < s2) )
+        s1++;
+
+    // Copy finished string
+    strcpy (s, s1);
+    return s;
+}
 
 //
 // Handle signals

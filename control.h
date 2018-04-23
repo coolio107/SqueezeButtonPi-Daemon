@@ -110,4 +110,17 @@ int setup_encoder_ctrl(char * cmd, int pin1, int pin2, int edge);
 void handle_encoders(struct sbpd_server * server);
 
 
+//
+// Set of commands to send to LMS server
+//
+#define MAXLEN 255
+#define MAX_COMMANDS 80
+struct lms_command {
+  int code;
+  char fragment[MAXLEN];
+};
+
+int add_lms_command_frament ( char * name, char * value );
+
+
 #endif /* control_h */
