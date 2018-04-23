@@ -97,6 +97,27 @@ Arguments are a comma-separated list of configuration parameters:
             CMD_LONG: Command to be used for a long button push, see above command list
             long_time: Number of milliseconds to define a long press
 
+## Command configuration file
+
+    #
+    #  sbpd_commands.cfg  -  Custom commands definition
+    #
+    #   <CODE>=<JSON Formatted lms cli command>
+    #
+    #       CODE - MUST be a 4 character code, to be reference on command line when defining buttons
+    #
+    #       For commands reference the LMS cli documentation, commands are to be JSON formatted.
+    #        
+    # Default commands         
+    PLAY=["pause"]
+    VOL-=["button","voldown"]
+    VOL+=["button","volup"]
+    PREV=["button","rew"]
+    NEXT=["button","fwd"]
+    POWR=["button","power"]"
+    MIX+=["mixer","volume","+5"]
+    MIX-=["mixer","volume","-5"]
+
 ## Security
 
 One issue with this code is that since it uses WiringPi it needs to be run with root privileges.
