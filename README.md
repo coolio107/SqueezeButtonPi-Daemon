@@ -45,14 +45,16 @@ Usage:
 Options arguments:
   
     -A, --address=Server-Address   Set server address. Default: autodetect
+    -f, --conf_file=</path/config-file>
+                               Full path to command configuration file
     -M, --mac=MAC-Address      Set MAC address of player. Deafult: autodetect
     -p, --password=password    Set password for server. Default: none
     -P, --port=xxxx            Set server control port. Default: autodetect
     -u, --username=user name   Set user name for server. Default: none
     -d, --daemonize            Daemonize
-    -k, --kill                 Kill daemon
     -s, --silent               Don't produce output
     -v, --verbose              Produce verbose output
+    -z, --debug                Produce degub output
     -?, --help                 Give this help list
         --usage                Give a short usage message
     -V, --version              Print program version
@@ -75,14 +77,16 @@ Arguments are a comma-separated list of configuration parameters:
             "b" for "Button"
             pin: GPIO PIN numbers in BCM-notation
             CMD: Command. One of:
-                PLAY:   Play/pause
-                PREV:   Jump to previous track
-                NEXT:   Jump to next track
-                VOL+:   Increase volume
-                VOL-:   Decrease volume
-                POWR:   Toggle power state
-            Command type SCRIPT.
-                SCRIPT:/path/to/shell/script.sh
+                   PLAY:   Play/pause
+                   PREV:   Jump to previous track
+                   NEXT:   Jump to next track
+                   VOL+:   Increase volume
+                   VOL-:   Decrease volume
+                   POWR:   Toggle power state
+                 Commands can be defined in config file
+                     use -f option, ref:sbpd_commands.cfg 
+                 Command type SCRIPT.
+                   SCRIPT:/path/to/shell/script.sh
             resist: Optional. one of
                 0 - Internal resistor off
                 1 - pull down         - input puts 3v on GPIO pin

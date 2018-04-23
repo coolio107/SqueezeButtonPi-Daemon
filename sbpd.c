@@ -96,8 +96,8 @@ static struct argp_option options[] =
     { "verbose",   'v', 0, 0, "Produce verbose output", 1 },
     { "silent",    's', 0, 0, "Don't produce output", 1 },
     { "daemonize", 'd', 0, 0, "Daemonize", 1 },
-    { "kill",      'k', 0, 0, "Kill daemon", 1 },
-	{ "debug",     'z', 0, 0, "Produce degub output", 1 },
+//    { "kill",      'k', 0, 0, "Kill daemon", 1 },
+    { "debug",     'z', 0, 0, "Produce degub output", 1 },
     {0}
 };
 //
