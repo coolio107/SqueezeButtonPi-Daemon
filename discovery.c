@@ -239,7 +239,7 @@ bool get_serverIPv4(uint32_t *ip) {
                 }
                 found = true;
             }
-            loginfo("Found server %s. Same as before");
+            logdebug("Found server %s. Same as before");
             // no logging? we're done
             if (loglevel() < LOG_NOTICE) {
                 fclose(procTcp);
