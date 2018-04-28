@@ -83,25 +83,23 @@ void updateButtons()
 	{
 		bool bit = digitalRead(button->pin);
 		bool presstype;
-		logdebug("%lu - %lu  Pin Value=%i   Stored Value=%i", (unsigned long)now, (unsigned long)button->timepressed, bit, button->value);
+		logdebug("%lu - %lu= %i  Pin Value=%i   Stored Value=%i", (unsigned long)now, (unsigned long)button->timepressed, (signed int)(now - button->timepressed), bit, button->value);
 
 		int increment = 0;
-		if (bit == button->pressed){
-			if (button->timepressed == 0){	
-				button->timepressed = now;
-				increment = 0;
-			} 
-		} else {
+		if ( (bit == button->pressed) && (button->timepressed == 0) ){	
+			button->timepressed = now;
+			increment = 0;
+		} else if (button->timepressed != 0){	
 			if ((signed int)(now - button->timepressed) < (signed int)NOPRESSTIME ) {
-				logdebug("No PRESS: %i", (now - button->timepressed));
+				logdebug("No PRESS: %i", (signed int)(now - button->timepressed));
 				increment = 0;
 			} else if ((signed int)(now - button->timepressed) > (signed int)button->long_press_time ) {
-				loginfo("Long PRESS: %i", (now - button->timepressed));
+				loginfo("Long PRESS: %i", (signed int)(now - button->timepressed));
 				button->value = bit;
 				presstype = LONGPRESS;
 				increment = 1;
 			} else {
-				loginfo("Short PRESS: %i", (now - button->timepressed));
+				loginfo("Short PRESS: %i", (signed int)(now - button->timepressed));
 				button->value = bit;
 				presstype = SHORTPRESS;
 				increment = 1;
