@@ -103,7 +103,7 @@ void button_press_cb(const struct button * button, int change, bool presstype) {
         if (button == button_ctrls[cnt].gpio_button) {
             button_ctrls[cnt].presstype = presstype;
             button_ctrls[cnt].waiting = true;
-            loginfo("Button CB set for button %d\n", cnt);
+            loginfo("Button CB set for button #:%d, gpio pin %d", cnt, button_ctrls[cnt].gpio_button->pin);
             return;
         }
     }
@@ -218,11 +218,13 @@ void handle_buttons(struct sbpd_server * server) {
             if ( button_ctrls[cnt].presstype == SHORTPRESS ) {
                 if ( button_ctrls[cnt].shortfragment != NULL ) {
                     send_command(server, button_ctrls[cnt].cmdtype, button_ctrls[cnt].shortfragment);
-                }
+                } 
             }
             if ( button_ctrls[cnt].presstype == LONGPRESS ) {
                 if ( button_ctrls[cnt].longfragment != NULL ) {
                     send_command(server, button_ctrls[cnt].cmd_longtype, button_ctrls[cnt].longfragment);
+                } else {
+                    loginfo("No Long Press command configured");
                 }
             }
             button_ctrls[cnt].waiting = false;  // clear waiting

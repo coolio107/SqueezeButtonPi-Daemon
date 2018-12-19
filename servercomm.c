@@ -71,7 +71,7 @@ static struct curl_slist * headerList = NULL;
 //
 //
 bool send_command(struct sbpd_server * server, int command, char * fragment) {
-    loginfo("Send Command:%d, Fragment:%s\n", command, fragment);
+    loginfo("Send Command:%d, Fragment:%s", command, fragment);
     if ( command == LMS ) {
         if (!curl)
             return false;
