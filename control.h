@@ -86,6 +86,7 @@ struct encoder_ctrl
     struct encoder * gpio_encoder;
     volatile long last_value;
     char * fragment;
+	int limit;
 };
 //
 //  Setup encoder control

@@ -116,7 +116,9 @@ For rotary encoders (one, volume only):\n\
     e,pin1,pin2,CMD[,edge]\n\
         \"e\" for \"Encoder\"\n\
         p1, p2: GPIO PIN numbers in BCM-notation\n\
-        CMD: Command. Unused for encoders, always VOLM for Volume\n\
+        CMD: Command. one of. \n\
+                    VOLM for Volume\n\
+                    TRAC for Prev/Next track\n\
         edge: Optional. one of\n\
                 1 - falling edge\n\
                 2 - rising edge\n\
@@ -361,7 +363,8 @@ parse_opt (int key, char *arg, struct argp_state *state)
 //      e,pin1,pin2,CMD[,edge]
 //          "e" for "Encoder"
 //          p1, p2: GPIO PIN numbers in BCM-notation
-//          CMD: Command. Unused for encoders, always VOLM for Volume
+//          CMD:        VOLM for Volume
+//                      TRAC for Playlist previous/next
 //          edge: Optional. one of
 //                  1 - falling edge
 //                  2 - rising edge
