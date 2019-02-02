@@ -87,6 +87,8 @@ struct encoder_ctrl
     volatile long last_value;
     char * fragment;
 	int limit;
+	volatile long long last_time;
+	int min_time;
 };
 //
 //  Setup encoder control

@@ -44,7 +44,7 @@
 #include <stdbool.h>
 
 #define USER_AGENT  "SqueezeButtonPi"
-#define VERSION     "2.0"
+#define VERSION     "2.1"
 
 // configuration parameters.
 // used to flag pre-configured or detected parameters
@@ -114,5 +114,5 @@ char * trim (char * s);
 #define logdebug( args... )    _mylog( __FILE__, __LINE__, LOG_DEBUG, args )
 void _mylog( const char *file, int line, int prio, const char *fmt, ... );
 int loglevel();
-
+long long ms_timer(void);
 #endif /* sbpd_h */

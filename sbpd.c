@@ -609,3 +609,9 @@ int loglevel() {
     return MAX(sysloglevel, streamloglevel);
 }
 
+long long ms_timer(void) {
+    struct timespec tv;
+
+    clock_gettime(CLOCK_REALTIME, &tv);
+    return (((long long)tv.tv_sec)*1000)+(tv.tv_nsec/1e6);
+}

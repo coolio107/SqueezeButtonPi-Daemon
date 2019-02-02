@@ -269,18 +269,21 @@ int setup_encoder_ctrl(char * cmd, int pin1, int pin2, int edge) {
     if (code == STRTOU32("VOLU")) {
         fragment = FRAGMENT_VOLUME;
         encoder_ctrls[numberofencoders].limit = 100;
+        encoder_ctrls[numberofencoders].min_time = 0;
     } else if (code == STRTOU32("TRAC")) {
         fragment = FRAGMENT_TRACK;
         encoder_ctrls[numberofencoders].limit = 1;
+        encoder_ctrls[numberofencoders].min_time = 500;
     } 
     if ( fragment == NULL ) {
         return -1;
-	}
-    
+    }
+
     struct encoder * gpio_e = setupencoder(pin1, pin2, encoder_rotate_cb, edge);
     encoder_ctrls[numberofencoders].fragment = fragment;
     encoder_ctrls[numberofencoders].gpio_encoder = gpio_e;
     encoder_ctrls[numberofencoders].last_value = 0;
+    encoder_ctrls[numberofencoders].last_time = 0;
     numberofencoders++;
     loginfo("Rotary encoder defined: Pin %d, %d, Edge: %s, Fragment: \n%s",
             pin1, pin2,
@@ -297,18 +300,13 @@ int setup_encoder_ctrl(char * cmd, int pin1, int pin2, int edge) {
 //
 void handle_encoders(struct sbpd_server * server) {
     //
-    //  chatter filter 200ms - disabled...
+    //  chatter filter set duration in encoder setup.
+    //      - volume set to 0...
+    //      - track change set to 500ms
     //  We poll every 100ms anyway plus wait for network action to complete
     //
-    /*static unsigned long lasttimeVol = 0;
-    struct timespec thistime;
-     
-    clock_gettime(0, &thistime);
-    unsigned long time = thistime.tv_sec * 10 + thistime.tv_nsec / (1e8);
-    if (lasttimeVol - time < 2) {
-        return;
-    }*/
-    
+    long long time = ms_timer();
+
     //logdebug("Polling encoders");
 
     int command = LMS;
@@ -322,6 +320,17 @@ void handle_encoders(struct sbpd_server * server) {
         if (delta > 100)
             delta = 0;
         if (delta != 0) {
+            //Check if change happened before minimum delay, clear out data.
+            if ( encoder_ctrls[cnt].last_time + encoder_ctrls[cnt].min_time > time ) {
+                loginfo("Encoder on GPIO %d, %d value change: %d, before %d ms ellapsed not sending lms command.",
+                    encoder_ctrls[cnt].gpio_encoder->pin_a,
+                    encoder_ctrls[cnt].gpio_encoder->pin_b,
+                    delta,
+                    (encoder_ctrls[cnt].min_time) );
+                encoder_ctrls[cnt].last_value = encoder_ctrls[cnt].gpio_encoder->value;
+                return;
+            }
+
             loginfo("Encoder on GPIO %d, %d value change: %d",
                     encoder_ctrls[cnt].gpio_encoder->pin_a,
                     encoder_ctrls[cnt].gpio_encoder->pin_b,
@@ -337,7 +346,7 @@ void handle_encoders(struct sbpd_server * server) {
 
             if (send_command(server, command, fragment)) {
                 encoder_ctrls[cnt].last_value = encoder_ctrls[cnt].gpio_encoder->value;
-                //lasttimeVol = time; // chatter filter
+                encoder_ctrls[cnt].last_time = time; // chatter filter
             }
         }
     }
