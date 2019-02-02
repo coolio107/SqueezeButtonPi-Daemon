@@ -66,6 +66,12 @@ static int numberofencoders = 0;
 #define FRAGMENT_POWER           "[\"button\",\"power\"]"
 */
 //
+//  Encoder
+//
+#define FRAGMENT_VOLUME         "[\"mixer\",\"volume\",\"%s%d\"]"
+#define FRAGMENT_TRACK          "[\"playlist\",\"jump\",\"%s%d\"]"
+
+//
 //  LMS Command structure
 //
 static struct lms_command lms_commands[MAX_COMMANDS];
@@ -88,11 +94,6 @@ char * get_lms_command_fragment ( int code ) {
     }
     return NULL;
 }
-
-//
-//  Encoder
-//
-#define FRAGMENT_VOLUME         "[\"mixer\",\"volume\",\"%s%d\"]"
 
 //
 //  Button press callback
@@ -246,6 +247,7 @@ void encoder_rotate_cb(const struct encoder * encoder, long change) {
 //  Parameters:
 //      cmd: Command. Currently only
 //                  VOLU    - volume
+//                  TRAC    - previous or next track
 //          Can be NULL for volume
 //      pin1: the GPIO-Pin-Number for the first pin used
 //      pin2: the GPIO-Pin-Number for the second pin used
@@ -256,10 +258,9 @@ void encoder_rotate_cb(const struct encoder * encoder, long change) {
 //
 //
 int setup_encoder_ctrl(char * cmd, int pin1, int pin2, int edge) {
-    char * fragment = FRAGMENT_VOLUME;
-    /*if (strlen(cmd) > 4)
+    char * fragment = NULL;
+    if (strlen(cmd) > 4)
         return -1;
-    
     //
     //  Select fragment for parameter
     //  Would love to "switch" here but that's not portable...
@@ -267,12 +268,22 @@ int setup_encoder_ctrl(char * cmd, int pin1, int pin2, int edge) {
     uint32_t code = STRTOU32(cmd);
     if (code == STRTOU32("VOLU")) {
         fragment = FRAGMENT_VOLUME;
-    }*/
-    
+        encoder_ctrls[numberofencoders].limit = 100;
+        encoder_ctrls[numberofencoders].min_time = 0;
+    } else if (code == STRTOU32("TRAC")) {
+        fragment = FRAGMENT_TRACK;
+        encoder_ctrls[numberofencoders].limit = 1;
+        encoder_ctrls[numberofencoders].min_time = 500;
+    } 
+    if ( fragment == NULL ) {
+        return -1;
+    }
+
     struct encoder * gpio_e = setupencoder(pin1, pin2, encoder_rotate_cb, edge);
     encoder_ctrls[numberofencoders].fragment = fragment;
     encoder_ctrls[numberofencoders].gpio_encoder = gpio_e;
     encoder_ctrls[numberofencoders].last_value = 0;
+    encoder_ctrls[numberofencoders].last_time = 0;
     numberofencoders++;
     loginfo("Rotary encoder defined: Pin %d, %d, Edge: %s, Fragment: \n%s",
             pin1, pin2,
@@ -289,18 +300,13 @@ int setup_encoder_ctrl(char * cmd, int pin1, int pin2, int edge) {
 //
 void handle_encoders(struct sbpd_server * server) {
     //
-    //  chatter filter 200ms - disabled...
+    //  chatter filter set duration in encoder setup.
+    //      - volume set to 0...
+    //      - track change set to 500ms
     //  We poll every 100ms anyway plus wait for network action to complete
     //
-    /*static unsigned long lasttimeVol = 0;
-    struct timespec thistime;
-     
-    clock_gettime(0, &thistime);
-    unsigned long time = thistime.tv_sec * 10 + thistime.tv_nsec / (1e8);
-    if (lasttimeVol - time < 2) {
-        return;
-    }*/
-    
+    long long time = ms_timer();
+
     //logdebug("Polling encoders");
 
     int command = LMS;
@@ -312,21 +318,35 @@ void handle_encoders(struct sbpd_server * server) {
         //
         int delta = (int)(encoder_ctrls[cnt].gpio_encoder->value - encoder_ctrls[cnt].last_value);
         if (delta > 100)
-            delta = 0;  //
+            delta = 0;
         if (delta != 0) {
-            logdebug("Encoder on GPIO %d, %d value change: %d",
+            //Check if change happened before minimum delay, clear out data.
+            if ( encoder_ctrls[cnt].last_time + encoder_ctrls[cnt].min_time > time ) {
+                loginfo("Encoder on GPIO %d, %d value change: %d, before %d ms ellapsed not sending lms command.",
+                    encoder_ctrls[cnt].gpio_encoder->pin_a,
+                    encoder_ctrls[cnt].gpio_encoder->pin_b,
+                    delta,
+                    (encoder_ctrls[cnt].min_time) );
+                encoder_ctrls[cnt].last_value = encoder_ctrls[cnt].gpio_encoder->value;
+                return;
+            }
+
+            loginfo("Encoder on GPIO %d, %d value change: %d",
                     encoder_ctrls[cnt].gpio_encoder->pin_a,
                     encoder_ctrls[cnt].gpio_encoder->pin_b,
                     delta);
 
             char fragment[50];
             char * prefix = (delta > 0) ? "+" : "-";
+            if ( abs(delta) > encoder_ctrls[cnt].limit ) {
+                     delta = encoder_ctrls[cnt].limit;
+            }
             snprintf(fragment, sizeof(fragment),
                      encoder_ctrls[cnt].fragment, prefix, abs(delta));
 
             if (send_command(server, command, fragment)) {
                 encoder_ctrls[cnt].last_value = encoder_ctrls[cnt].gpio_encoder->value;
-                //lasttimeVol = time; // chatter filter
+                encoder_ctrls[cnt].last_time = time; // chatter filter
             }
         }
     }
