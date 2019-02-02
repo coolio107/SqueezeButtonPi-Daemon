@@ -117,7 +117,7 @@ For rotary encoders (one, volume only):\n\
         \"e\" for \"Encoder\"\n\
         p1, p2: GPIO PIN numbers in BCM-notation\n\
         CMD: Command. one of. \n\
-                    VOLM for Volume\n\
+                    VOLU for Volume\n\
                     TRAC for Prev/Next track\n\
         edge: Optional. one of\n\
                 1 - falling edge\n\
@@ -198,8 +198,11 @@ int main(int argc, char * argv[]) {
     //  Now parse GPIO elements
     //  Needed to initialize GPIO first
     //
-    parse_arg();
+    error_t arg_err = parse_arg();
     
+	if ( arg_err != 0 ) {
+       return -2;
+    }
     //
     // Configure signal handling
     //
@@ -363,7 +366,7 @@ parse_opt (int key, char *arg, struct argp_state *state)
 //      e,pin1,pin2,CMD[,edge]
 //          "e" for "Encoder"
 //          p1, p2: GPIO PIN numbers in BCM-notation
-//          CMD:        VOLM for Volume
+//          CMD:        VOLU for Volume
 //                      TRAC for Playlist previous/next
 //          edge: Optional. one of
 //                  1 - falling edge
@@ -413,6 +416,10 @@ static error_t parse_arg() {
                     int edge = 0;
                     if (string)
                         edge = (int)strtol(string, NULL, 10);
+                    if ( (p1 == 0) | (p2 == 0) | (cmd == NULL) ) {
+                        logerr("Encoder argument error");
+                        return ARGP_ERR_UNKNOWN;
+                    }
                     setup_encoder_ctrl(cmd, p1, p2, edge);
                 }
                     break;
@@ -437,7 +444,10 @@ static error_t parse_arg() {
                     uint32_t long_time=3000;
                     if (string)
                         long_time = (int)strtol(string, NULL, 10);
-
+                    if ( (pin == 0) | (cmd == NULL) ) {
+                        logerr("Button argument error");
+                        return ARGP_ERR_UNKNOWN;
+                    }
                     setup_button_ctrl(cmd, pin, resist, pressed, cmd_long, long_time);
                 }
                     break;
