@@ -97,7 +97,7 @@ static struct argp_option options[] =
     { "silent",    's', 0, 0, "Don't produce output", 1 },
     { "daemonize", 'd', 0, 0, "Daemonize", 1 },
 //    { "kill",      'k', 0, 0, "Kill daemon", 1 },
-    { "debug",     'z', 0, 0, "Produce degub output", 1 },
+    { "debug",     'z', 0, 0, "Produce debug output", 1 },
     {0}
 };
 //
