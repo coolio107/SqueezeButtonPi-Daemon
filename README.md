@@ -54,7 +54,7 @@ Options arguments:
     -d, --daemonize            Daemonize
     -s, --silent               Don't produce output
     -v, --verbose              Produce verbose output
-    -z, --debug                Produce degub output
+    -z, --debug                Produce debug output
     -?, --help                 Give this help list
         --usage                Give a short usage message
     -V, --version              Print program version
