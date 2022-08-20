@@ -63,11 +63,12 @@ Non-Option arguments.
 At least one needs to be specified for the daemon to do anything useful
 Arguments are a comma-separated list of configuration parameters:
   
-    For rotary encoders (one, volume only):
+    For rotary encoders:
         e,pin1,pin2,CMD[,edge]
             "e" for "Encoder"
-            p1, p2: GPIO PIN numbers in BCM-notation
-            CMD: Command. Unused for encoders, always VOLM for Volume
+            pin1, pin2: GPIO PIN numbers in BCM-notation
+            CMD:        VOLU for Volume
+                        TRAC for Playlist previous/next
             edge: Optional. one of
                   1 - falling edge
                   2 - rising edge
