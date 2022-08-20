@@ -112,10 +112,10 @@ static char args_doc[] = "[e,pin1,pin2,CMD,edge] [b,pin,CMD,resist,pressed...]";
 static char doc[] = "sbpd - SqueezeButtinPiDaemon is a button and rotary encoder handling daemon for Raspberry Pi and a Squeezebox player software.\nsbpd connects to a Squeezebox server and sends the configured control commands on behalf of a player running on the RPi.\n<C>2017 Joerg Schwieder/PenguinLovesMusic.com\n\n\
 At least one needs to be specified for the daemon to do anything useful\n\
 Arguments are a comma-separated list of configuration parameters:\n\
-For rotary encoders (one, volume only):\n\
+For rotary encoders:\n\
     e,pin1,pin2,CMD[,edge]\n\
         \"e\" for \"Encoder\"\n\
-        p1, p2: GPIO PIN numbers in BCM-notation\n\
+        pin1, pin2: GPIO PIN numbers in BCM-notation\n\
         CMD: Command. one of. \n\
                     VOLU for Volume\n\
                     TRAC for Prev/Next track\n\
@@ -124,7 +124,7 @@ For rotary encoders (one, volume only):\n\
                 2 - rising edge\n\
                 0, 3 - both\n\
 For buttons:\n\
-    b,pin,CMD[,resist,pressed]\n\
+    b,pin,CMD[,resist,pressed,CMD_LONG,long_time]\n\
         \"b\" for \"Button\"\n\
          pin:  GPIO PIN numbers in BCM-notation\n\
          CMD: Command. One of.\n\
@@ -362,10 +362,10 @@ parse_opt (int key, char *arg, struct argp_state *state)
 //  GPIO devices
 //
 //  Arguments are a comma-separated list of configuration parameters:
-//  For rotary encoders (one, volume only):
+//  For rotary encoders:
 //      e,pin1,pin2,CMD[,edge]
 //          "e" for "Encoder"
-//          p1, p2: GPIO PIN numbers in BCM-notation
+//          pin1, pin2: GPIO PIN numbers in BCM-notation
 //          CMD:        VOLU for Volume
 //                      TRAC for Playlist previous/next
 //          edge: Optional. one of
@@ -392,7 +392,7 @@ parse_opt (int key, char *arg, struct argp_state *state)
 //                0 - state is 0 (default)
 //                1 - state is 1
 //           CMD_LONG: Command to be used for a long button push, see above command list
-//           long_time: Number of millivoid seconds to define a long press
+//           long_time: Number of milliseconds to define a long press
 //
 static error_t parse_arg() {
     for (int arg_num = 0; arg_num < arg_element_count; arg_num++) {
