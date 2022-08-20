@@ -147,7 +147,8 @@ void _write_server_string(struct sbpd_server * server, in_addr_t s_addr) {
     
     char * aAddr = inet_ntoa(addr);
     loginfo("Server address found: %s", aAddr);
-    strncpy(foundServer, aAddr, 16);
+    strncpy(foundServer, aAddr, 15);
+    foundServer[15]='\0';
     server->host = foundServer;
 }
 
@@ -426,7 +427,8 @@ static bool get_mac(uint8_t mac[]) {
         for (ifr = ifc.ifc_req; ifr < ifend; ifr++) {
             if (ifr->ifr_addr.sa_family == AF_INET) {
                 
-                strncpy(ifreq.ifr_name, ifr->ifr_name, sizeof(ifreq.ifr_name));
+                strncpy(ifreq.ifr_name, ifr->ifr_name, sizeof(ifreq.ifr_name)-1);
+                ifreq.ifr_name[sizeof(ifreq.ifr_name)-1]='\0';
                 if (ioctl (s, SIOCGIFHWADDR, &ifreq) == 0) {
                     memcpy(mac, ifreq.ifr_hwaddr.sa_data, 6);
                     if (mac[0]+mac[1]+mac[2] != 0) {
