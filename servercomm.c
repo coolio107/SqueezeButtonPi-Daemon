@@ -143,7 +143,7 @@ bool send_command(struct sbpd_server * server, int command, char * fragment) {
         //commLock = false;
         return true;
     } else if ( command == SCRIPT ) {
-        char * cmdline = (char *) malloc(strlen(fragment));
+        char * cmdline = (char *) malloc(strlen(fragment)+1);
         int err;
         strcpy( cmdline, fragment);
         loginfo("Sending commandline: %s\n", cmdline);
